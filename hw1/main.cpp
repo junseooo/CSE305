@@ -306,7 +306,7 @@ string string_to_hex(string str) {
     return str;
 }
 
-int main(){
+int main(int argc, char** argv){
     vector<string> code;
     vector<string> dcode; // data part의 코드
     vector<string> tcode; // text part의 코드
@@ -322,225 +322,213 @@ int main(){
 
     int dadd = 0x10000000; // 8-bit로 표현한 16진수. -> binary로 표현 시 32-bit으로 표현 가능
     int tadd = 0x00400000;
-    
-    // cin으로 파일 읽어오기
-    // istream 머시기 그거 써서 파일명 동일하게 만들어서 출력파일 만들기 .o 파일로
-    cout << "$ ";
-    string command;
-    getline(cin, command);
 
-    istringstream start(command);
-    vector<string> commandParsing;
-    while(start >> command){
-        commandParsing.push_back(command);
-    }
-    string inputFile = commandParsing[1];
+    string inputFile = argv[1];
+
     string fileName = inputFile;
-    string outputFile;
+
     cout << endl << "input file name : " << inputFile << endl;
     
-    if (commandParsing[0] == "./runfile") {
-        fileName.pop_back();
-        fileName.pop_back();
-        string outputFile = fileName + ".o";
-        cout << "output file name : " << outputFile << endl << endl;
-        ofstream fout;
-        fout.open(outputFile);
-        fout.close();
+    fileName.pop_back();
+    fileName.pop_back();
+    string outputFile = fileName + ".o";
+    cout << "output file name : " << outputFile << endl << endl;
+    ofstream fout;
+    fout.open(outputFile);
+    fout.close();
 
-        cout << "START HERE" << endl << endl;
+    cout << "START HERE" << endl << endl;
+
+    ifstream fin;
+    fin.open(inputFile);
+    string line;
     
-        ifstream fin;
-        fin.open(inputFile);
-        string line;
-        
-        while(getline(fin, line)){
-            // cout << line << endl;
-            int i=0;
-            while(line[i] == ' '){
-                line.erase(line.begin());
-            }
-            code.push_back(line);
+    while(getline(fin, line)){
+        // cout << line << endl;
+        int i=0;
+        while(line[i] == ' '){
+            line.erase(line.begin());
         }
-        fin.close();
+        code.push_back(line);
+    }
+    fin.close();
 
-        // 전체 코드 잘 들어갔는지 확인
-        cout << "< check total sample code input >" << endl;
-        for(int i=0; i<code.size(); i++){
-            cout << code[i] << endl;
-        }
-        cout << endl;
+    // 전체 코드 잘 들어갔는지 확인
+    cout << "< check total sample code input >" << endl;
+    for(int i=0; i<code.size(); i++){
+        cout << code[i] << endl;
+    }
+    cout << endl;
 
-        // 전체 코드 중에서 data code만 따로 저장
-        // 빈칸일 경우 dcode에 안 넣기
-        int didx = findIndex(code, ".data");
-        int tidx = findIndex(code, ".text");
-        // cout << "didx : " << didx << endl;
-        // cout << "tidx : " << tidx << endl;
-        // cout << "code.size() : " << code.size() << endl;
-        // cout << endl;
-        
-        cout << "< check data code input > " << endl;
-        int dblank = 0;
-        int dsize = tidx - didx - 1;
-        cout << "dsize : " << dsize << endl;
-        for(int i=didx+1; i<dsize+1; i++){
-            if(code[i].empty() != true){
-                dcode.push_back(code[i]);
-            }
-            else{
-                dblank++;
-                continue;
-            }
+    // 전체 코드 중에서 data code만 따로 저장
+    // 빈칸일 경우 dcode에 안 넣기
+    int didx = findIndex(code, ".data");
+    int tidx = findIndex(code, ".text");
+    // cout << "didx : " << didx << endl;
+    // cout << "tidx : " << tidx << endl;
+    // cout << "code.size() : " << code.size() << endl;
+    // cout << endl;
+    
+    cout << "< check data code input > " << endl;
+    int dblank = 0;
+    int dsize = tidx - didx - 1;
+    cout << "dsize : " << dsize << endl;
+    for(int i=didx+1; i<dsize+1; i++){
+        if(code[i].empty() != true){
+            dcode.push_back(code[i]);
         }
-        dsize -= dblank;
-        cout << "new dsize : " << dsize << endl;
-        string input_dsize = string_to_hex(toBinary(dsize, 16));
-        cout << "dsize in hex : " << input_dsize << endl;
-        fout.open(outputFile);
-        if(fout.is_open()){
-            fout << input_dsize << endl;
+        else{
+            dblank++;
+            continue;
         }
-        fout.close();
-        for(int i=0; i<dsize; i++){
-            cout << dcode[i] << endl;
-        }
-        cout << endl;
+    }
+    dsize -= dblank;
+    cout << "new dsize : " << dsize << endl;
+    string input_dsize = string_to_hex(toBinary(dsize, 16));
+    cout << "dsize in hex : " << input_dsize << endl;
+    fout.open(outputFile);
+    if(fout.is_open()){
+        fout << input_dsize << endl;
+    }
+    fout.close();
+    for(int i=0; i<dsize; i++){
+        cout << dcode[i] << endl;
+    }
+    cout << endl;
 
-        // 전체 코드 중에서 test code만 따로 저장
-        // 빈칸일 경우 tcode에 안 넣기
-        cout << "< check test code input > " << endl;
-        int tblank = 0;
-        int tsize = code.size() - tidx - 1;
-        cout << "tsize : " << tsize << endl;
-        for(int i=tidx+1; i<code.size(); i++){
-            if(code[i].empty() != true) {
-                tcode.push_back(code[i]);
-            }
-            else {
-                tblank++;
-                continue;
-            }
+    // 전체 코드 중에서 test code만 따로 저장
+    // 빈칸일 경우 tcode에 안 넣기
+    cout << "< check test code input > " << endl;
+    int tblank = 0;
+    int tsize = code.size() - tidx - 1;
+    cout << "tsize : " << tsize << endl;
+    for(int i=tidx+1; i<code.size(); i++){
+        if(code[i].empty() != true) {
+            tcode.push_back(code[i]);
         }
-        tsize -= tblank;
-        cout << "new tsize : " << tsize << endl;
-        string input_tsize = string_to_hex(toBinary(tsize, 16));
-        cout << "tsize in hex : " << input_tsize << endl;
-        fout.open(outputFile);
-        if(fout.is_open()){
-            fout << input_tsize << endl;
+        else {
+            tblank++;
+            continue;
         }
-        fout.close();
-        for(int i=0; i<tsize; i++){
-            cout << tcode[i] << endl;
-        }
-        cout << endl;
-        
-        // label의 경우 뒤에 값이 존재하면 주소 부여. 뒤에 값이 없는 경우 주소 부여 x.
-        // ex) "main:" 의 경우 뒤에 아무것도 없으므로 주소 부여 x
-        // ex) "var: .word 5" 의 경우 뒤에 값이 있으므로 주소 부여해야함.
-        // text에서 sum: 다음에 있는 instruction의 유무 판단 후 주소 부여해야함.
-        /********************** data read **********************/
-        // ":" 있을 때 label 저장하는 벡터에 저장해두기.
-        // 나중에 write file 할 때 label이 나오면 그 주소값에 접근할 수 있게끔.
+    }
+    tsize -= tblank;
+    cout << "new tsize : " << tsize << endl;
+    string input_tsize = string_to_hex(toBinary(tsize, 16));
+    cout << "tsize in hex : " << input_tsize << endl;
+    fout.open(outputFile);
+    if(fout.is_open()){
+        fout << input_tsize << endl;
+    }
+    fout.close();
+    for(int i=0; i<tsize; i++){
+        cout << tcode[i] << endl;
+    }
+    cout << endl;
+    
+    // label의 경우 뒤에 값이 존재하면 주소 부여. 뒤에 값이 없는 경우 주소 부여 x.
+    // ex) "main:" 의 경우 뒤에 아무것도 없으므로 주소 부여 x
+    // ex) "var: .word 5" 의 경우 뒤에 값이 있으므로 주소 부여해야함.
+    // text에서 sum: 다음에 있는 instruction의 유무 판단 후 주소 부여해야함.
+    /********************** data read **********************/
+    // ":" 있을 때 label 저장하는 벡터에 저장해두기.
+    // 나중에 write file 할 때 label이 나오면 그 주소값에 접근할 수 있게끔.
 
-        for(int i=0; i<dsize; i++){
-            if(dcode[i].find(":") != string::npos){ // ":"가 존재할 경우
-                int index = dcode[i].find(":");
-                string buffer_str = dcode[i].substr(index+1);
-                if(buffer_str.empty() != true){ // ":"가 존재하는데 그 뒤에 문자열이 차있을 경우
-                    string label = dcode[i].substr(0, index);
-                    m.insert({label, dadd}); // label 이름(string)과 주소(int)를 map으로 저장
-                    dadd+=4;
-                }
-                else continue; // ":"가 존재하는데 그 뒤에 문자열이 비었을 경우
+    for(int i=0; i<dsize; i++){
+        if(dcode[i].find(":") != string::npos){ // ":"가 존재할 경우
+            int index = dcode[i].find(":");
+            string buffer_str = dcode[i].substr(index+1);
+            if(buffer_str.empty() != true){ // ":"가 존재하는데 그 뒤에 문자열이 차있을 경우
+                string label = dcode[i].substr(0, index);
+                m.insert({label, dadd}); // label 이름(string)과 주소(int)를 map으로 저장
+                dadd+=4;
             }
+            else continue; // ":"가 존재하는데 그 뒤에 문자열이 비었을 경우
         }
-        
-        /********************** text read **********************/ // data read와 비슷한 과정
-        for(int i=0; i<tsize; i++){
-            if(tcode[i].find(":") != string::npos){ // ":"가 존재할 경우
-                int index = tcode[i].find(":");
-                string buffer_str = tcode[i].substr(index+1);
-                if(buffer_str.empty() != true){ // ":" 가 존재하는데 그 뒤에 instruction이 있을 경우
-                    string label = tcode[i].substr(0, index);
-                    m.insert({label, tadd});
-                    tadd+=4;
-                }
-                else{ // ":" 뒤에 문자열이 더 없는 경우 - 다음 instruction의 주소와 같은 값으로 저장
-                    string label = tcode[i].substr(0, index);
-                    m.insert({label, tadd});
-                }
-            }
-            else{ // ":"가 없는 경우. 즉, 그냥 instruction일 경우
-                m.insert({tcode[i], tadd});
+    }
+    
+    /********************** text read **********************/ // data read와 비슷한 과정
+    for(int i=0; i<tsize; i++){
+        if(tcode[i].find(":") != string::npos){ // ":"가 존재할 경우
+            int index = tcode[i].find(":");
+            string buffer_str = tcode[i].substr(index+1);
+            if(buffer_str.empty() != true){ // ":" 가 존재하는데 그 뒤에 instruction이 있을 경우
+                string label = tcode[i].substr(0, index);
+                m.insert({label, tadd});
                 tadd+=4;
             }
-        }
-
-        /********************** write file **********************/
-
-        cout << "< check address >" << endl;
-        for(map<string, int>::iterator it = m.begin(); it != m.end(); ++it){
-            cout << it->first << " : " << it->second << endl;
-        }
-        cout << endl;
-
-        cout << "< check result >" << endl;
-        string value;
-        fout.open(outputFile);
-        for(int i=0; i<tsize; i++){
-            string result;
-            vector<string> v = Split(tcode[i]);
-            if(tcode[i].find(":") != string::npos){ // ":" 가 있을 경우
-                int index = tcode[i].find(":");
-                string str_buf = tcode[i].substr(index+1);
-                if(str_buf.empty() != true){ // ":" 뒤에 instruction이 존재할 경우
-                    vector<string> v_buf = Split(str_buf);
-                    value = instructionConversion(v_buf);
-                    result = string_to_hex(value);
-                    cout << tcode[i] << " : " << result << endl;
-                }
-                else continue; // ":" 뒤에 intruction이 없을 경우
+            else{ // ":" 뒤에 문자열이 더 없는 경우 - 다음 instruction의 주소와 같은 값으로 저장
+                string label = tcode[i].substr(0, index);
+                m.insert({label, tadd});
             }
-            else{
-                value = instructionConversion(v);
-                cout << tcode[i] << " : " << value << endl;
+        }
+        else{ // ":"가 없는 경우. 즉, 그냥 instruction일 경우
+            m.insert({tcode[i], tadd});
+            tadd+=4;
+        }
+    }
+
+    /********************** write file **********************/
+
+    cout << "< check address >" << endl;
+    for(map<string, int>::iterator it = m.begin(); it != m.end(); ++it){
+        cout << it->first << " : " << it->second << endl;
+    }
+    cout << endl;
+
+    cout << "< check result >" << endl;
+    string value;
+    fout.open(outputFile);
+    for(int i=0; i<tsize; i++){
+        string result;
+        vector<string> v = Split(tcode[i]);
+        if(tcode[i].find(":") != string::npos){ // ":" 가 있을 경우
+            int index = tcode[i].find(":");
+            string str_buf = tcode[i].substr(index+1);
+            if(str_buf.empty() != true){ // ":" 뒤에 instruction이 존재할 경우
+                vector<string> v_buf = Split(str_buf);
+                value = instructionConversion(v_buf);
                 result = string_to_hex(value);
                 cout << tcode[i] << " : " << result << endl;
             }
-            if(fout.is_open()){
-                fout << result << endl;
-            }
+            else continue; // ":" 뒤에 intruction이 없을 경우
         }
-        
-        cout << endl << "< one more data check >" << endl;
-        cout << "dsize : " << dsize << endl;
-        for(int i=0; i<dsize; i++){
-            cout << dcode[i] << endl;
-            vector<string> v = Split(dcode[i]);
-            // for(int j=0; j<v.size(); j++){
-            //     cout << v[j] << endl;
-            // }
-            int index = v.size();
-            // cout << index << endl;
-            string data_buf = v[index-1];
-            string bin_data_buf;
-            cout << data_buf << endl;
-            if(data_buf.find("0x") != string::npos){
-                int data_buf_dec = (int)strtol(data_buf.c_str(), NULL, 16);
-                bin_data_buf = toBinary(data_buf_dec, 32);
-            }
-            else{
-                bin_data_buf = toBinary(stoi(data_buf), 32);
-            }
-            cout << bin_data_buf << endl;
-            cout << string_to_hex(bin_data_buf) << endl;
-            fout << string_to_hex(bin_data_buf) << endl;
+        else{
+            value = instructionConversion(v);
+            cout << tcode[i] << " : " << value << endl;
+            result = string_to_hex(value);
+            cout << tcode[i] << " : " << result << endl;
         }
-        fout.close();
+        if(fout.is_open()){
+            fout << result << endl;
+        }
     }
-    else cout << "this is not an appropriate command." << endl;
+    
+    cout << endl << "< one more data check >" << endl;
+    cout << "dsize : " << dsize << endl;
+    for(int i=0; i<dsize; i++){
+        cout << dcode[i] << endl;
+        vector<string> v = Split(dcode[i]);
+        // for(int j=0; j<v.size(); j++){
+        //     cout << v[j] << endl;
+        // }
+        int index = v.size();
+        // cout << index << endl;
+        string data_buf = v[index-1];
+        string bin_data_buf;
+        cout << data_buf << endl;
+        if(data_buf.find("0x") != string::npos){
+            int data_buf_dec = (int)strtol(data_buf.c_str(), NULL, 16);
+            bin_data_buf = toBinary(data_buf_dec, 32);
+        }
+        else{
+            bin_data_buf = toBinary(stoi(data_buf), 32);
+        }
+        cout << bin_data_buf << endl;
+        cout << string_to_hex(bin_data_buf) << endl;
+        fout << string_to_hex(bin_data_buf) << endl;
+    }
+    fout.close();
+
 
     return 0;
 }
