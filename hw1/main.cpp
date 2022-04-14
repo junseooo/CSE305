@@ -247,6 +247,7 @@ string instructionConversion(vector<string> v){
                 auto address = m.find(imm);
                 if(address != m.end()){
                     int imm_add = address->second;
+                    // imm_add = (imm_add - PC)/4; // 현재 instruction의 주소를 받아올 수 없음 코드 다시 짜야함
                     result += toBinary(imm_add, 16);
                 }
                 return result;
