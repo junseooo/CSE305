@@ -62,33 +62,33 @@ string zeroExtension(string str){
     }
 }
 
-vector<string> parsingCode(string str, vector<string> reg){
-    string op = str.substr(0,6);
-    string rs = str.substr(6,11);
-    string rt = str.substr(11,16);
-    string rd = str.substr(16,21);
-    string shamt = str.substr(21,26);
-    string funct = str.substr(26,32);
-    string imm = str.substr(16,32);
-    string tar = str.substr(6,32);
+// vector<string> setReg(string str, vector<string> reg){
+    // string op = str.substr(0,6);
+    // string rs = str.substr(6,11);
+    // string rt = str.substr(11,16);
+    // string rd = str.substr(16,21);
+    // string shamt = str.substr(21,26);
+    // string funct = str.substr(26,32);
+    // string imm = str.substr(16,32);
+    // string tar = str.substr(6,32);
 
-    op = sbin2shex(op);
-    rs = sbin2shex(rs);
-    rt = sbin2shex(rt);
-    rd = sbin2shex(rd);
-    shamt = sbin2shex(shamt);
-    funct = sbin2shex(funct);
-    imm = sbin2shex(imm);
-    tar = sbin2shex(tar);
+    // op = sbin2shex(op);
+    // rs = sbin2shex(rs);
+    // rt = sbin2shex(rt);
+    // rd = sbin2shex(rd);
+    // shamt = sbin2shex(shamt);
+    // funct = sbin2shex(funct);
+    // imm = sbin2shex(imm);
+    // tar = sbin2shex(tar);
 
-    if(op == "0x0"){ // R format
-        if(funct == "0x21"){ // addu
+    // if(op == "0x0"){ // R format
+    //     if(funct == "0x21"){ // addu
             
-        }
-    }
+    //     }
+    // }
     
 
-}
+// }
 
 int main(int argc, char** argv){
     
@@ -215,11 +215,11 @@ int main(int argc, char** argv){
         sbin_tcode.push_back(buffer);
     }
 
-    // std::cout << "< check binary text code >" << std::endl;
-    // for(auto i : sbin_tcode){
-    //     std::cout << i << std::endl;
-    // }
-    // std::cout << std::endl;
+    std::cout << "< check binary text code >" << std::endl;
+    for(auto i : sbin_tcode){
+        std::cout << i << std::endl;
+    }
+    std::cout << std::endl;
 
     // mapping the address and hexadecimal code
     int tadd = 0x00400000;
@@ -243,8 +243,7 @@ int main(int argc, char** argv){
     /******************************************************
     ******************************************************/
     
-    std::cout << "Current register values:" << std::endl;
-    std::cout << "--------------------------------" << std::endl;
+    
     
     // register condition
     vector<string> reg;
@@ -255,6 +254,8 @@ int main(int argc, char** argv){
     int pc = 0x00400000;
     
     if(d_option == 0){
+        std::cout << "Current register values:" << std::endl;
+        std::cout << "--------------------------------" << std::endl;
         std::cout << "PC: 0x" << hex << pc << std::endl;
         std::cout << "Registers:" << std::endl;
         for(int i=0; i<reg.size(); i++){
@@ -262,9 +263,20 @@ int main(int argc, char** argv){
         }
         std::cout << std::endl;
     }
-    else{
-        
-    }
+    // else{
+    //     for(int i=0; i<num_of_instruction; i++){ // print each instruction case
+    //         std::cout << "Current register values:" << std::endl;
+    //         std::cout << "--------------------------------" << std::endl;
+    //         setReg(sbin_tcode[i], reg);
+    //         std::cout << "PC: 0x" << hex << pc << std::endl;
+    //         std::cout << "Registers:" << std::endl;
+    //         for(int i=0; i<reg.size(); i++){ // print register vector
+    //             std::cout << "R" << i << ": " << reg[i] << std::endl;
+    //         }
+    //         std::cout << std::endl;
+    //         pc+=4;
+    //     }
+    // }
 
     // print m option
     if(m_option == 1){
