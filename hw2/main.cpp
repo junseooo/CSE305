@@ -9,30 +9,30 @@
 
 using namespace std;
 
-string shex2sbin(string sHex){
-    string sReturn = "";
-    sHex = sHex.substr(2);
-    for(int i = 0; i<sHex.length(); ++i){
-        switch (sHex[i]){
-            case '0': sReturn.append ("0000"); break;
-            case '1': sReturn.append ("0001"); break;
-            case '2': sReturn.append ("0010"); break;
-            case '3': sReturn.append ("0011"); break;
-            case '4': sReturn.append ("0100"); break;
-            case '5': sReturn.append ("0101"); break;
-            case '6': sReturn.append ("0110"); break;
-            case '7': sReturn.append ("0111"); break;
-            case '8': sReturn.append ("1000"); break;
-            case '9': sReturn.append ("1001"); break;
-            case 'a': sReturn.append ("1010"); break;
-            case 'b': sReturn.append ("1011"); break;
-            case 'c': sReturn.append ("1100"); break;
-            case 'd': sReturn.append ("1101"); break;
-            case 'e': sReturn.append ("1110"); break;
-            case 'f': sReturn.append ("1111"); break;
+string shex2sbin(string shex){
+    string sbin = "";
+    shex = shex.substr(2);
+    for(int i = 0; i<shex.length(); ++i){
+        switch(shex[i]){
+            case '0': sbin.append ("0000"); break;
+            case '1': sbin.append ("0001"); break;
+            case '2': sbin.append ("0010"); break;
+            case '3': sbin.append ("0011"); break;
+            case '4': sbin.append ("0100"); break;
+            case '5': sbin.append ("0101"); break;
+            case '6': sbin.append ("0110"); break;
+            case '7': sbin.append ("0111"); break;
+            case '8': sbin.append ("1000"); break;
+            case '9': sbin.append ("1001"); break;
+            case 'a': sbin.append ("1010"); break;
+            case 'b': sbin.append ("1011"); break;
+            case 'c': sbin.append ("1100"); break;
+            case 'd': sbin.append ("1101"); break;
+            case 'e': sbin.append ("1110"); break;
+            case 'f': sbin.append ("1111"); break;
         }
     }
-    return sReturn;
+    return sbin;
 }
 
 string sbin2shex(string str) {
@@ -62,33 +62,60 @@ string zeroExtension(string str){
     }
 }
 
-// void amulator(string str, int ptr){
+vector<string> parsingCode(string str, vector<string> reg){
+    string op = str.substr(0,6);
+    string rs = str.substr(6,11);
+    string rt = str.substr(11,16);
+    string rd = str.substr(16,21);
+    string shamt = str.substr(21,26);
+    string funct = str.substr(26,32);
+    string imm = str.substr(16,32);
+    string tar = str.substr(6,32);
 
-// }
+    op = sbin2shex(op);
+    rs = sbin2shex(rs);
+    rt = sbin2shex(rt);
+    rd = sbin2shex(rd);
+    shamt = sbin2shex(shamt);
+    funct = sbin2shex(funct);
+    imm = sbin2shex(imm);
+    tar = sbin2shex(tar);
+
+    if(op == "0x0"){ // R format
+        if(funct == "0x21"){ // addu
+            
+        }
+    }
+    
+
+}
 
 int main(int argc, char** argv){
     
-    /******************
-     ARGUMENTS PARSING
-    ******************/
 
-    int m_option = 0;
-    int d_option = 0;
-    int n_option = 0;
-
-    vector<string> input_arguments;
-    string string_start_address;
-    string string_end_address;
-    string string_num_of_instruction;
-    string input_file;
+    /******************************************************
+    ******************************************************/
 
     // arguments parsing
-    for(int i = 0; i < argc; i++){
+    vector<string> input_arguments;
+
+    for(int i=0; i<argc; i++){
         string str(argv[i]);
         input_arguments.push_back(str);
     }
 
     // data parsing
+    int m_option = 0;
+    int d_option = 0;
+    int n_option = 0;
+    string string_sadd;
+    string string_eadd;
+    string string_num_of_instruction;
+    string input_file;
+    int sadd;
+    int eadd;
+    int num_of_instruction;
+
     for(int i=0; i<input_arguments.size(); i++){
         if(input_arguments[i] == "-m"){
             m_option = 1;
@@ -99,8 +126,12 @@ int main(int argc, char** argv){
             while(getline(ss, buffer, ':')){
                 v.push_back(buffer);
             }
-            string_start_address = v[0];
-            string_end_address = v[1];
+            string_sadd = v[0];
+            string_eadd = v[1];
+            string_sadd = string_sadd.substr(2);
+            string_eadd = string_eadd.substr(2);            
+            sadd = strtol(string_sadd.c_str(), NULL, 16);
+            eadd = strtol(string_eadd.c_str(), NULL, 16);
         }
 
         if(input_arguments[i] == "-d"){
@@ -110,6 +141,7 @@ int main(int argc, char** argv){
         if(input_arguments[i] == "-n"){
             n_option = 1;
             string_num_of_instruction = input_arguments[i+1];
+            num_of_instruction = stoi(string_num_of_instruction);
         }
         
         if(i == input_arguments.size() - 1){
@@ -117,60 +149,18 @@ int main(int argc, char** argv){
         }
     }
 
-    string_start_address = string_start_address.substr(2);
-    string_end_address = string_end_address.substr(2);
-    int start_address = stoi(string_start_address);
-    int end_address = stoi(string_end_address);
-    int num_of_instruction = stoi(string_num_of_instruction);
+    // std::cout << "< check options >" << std::endl;
+    // std::cout << "sadd : " << sadd << std::endl;
+    // std::cout << "eadd : " << eadd << std::endl;
+    // std::cout << "num_of_instruction : " << num_of_instruction << std::endl;
+    // std::cout << "input_file : " << input_file << std::endl;
+    // std::cout << std::endl;
 
-    // cout << "< check options >" << endl;
-    // cout << "start_address : " << start_address << endl;
-    // cout << "end_address : " << end_address << endl;
-    // cout << "num_of_instruction : " << num_of_instruction << endl;
-    // cout << "input_file : " << input_file << endl;
-    // cout << endl;
 
-    /******************
-     input file parsing
-    ******************/
-    
-    string R0;
-    string R1;
-    string R2;
-    string R3;
-    string R4;
-    string R5;
-    string R6;
-    string R7;
-    string R8;
-    string R9;
-    string R10;
-    string R11;
-    string R12;
-    string R13;
-    string R14;
-    string R15;
-    string R16;
-    string R17;
-    string R18;
-    string R19;
-    string R20;
-    string R21;
-    string R22;
-    string R23;
-    string R24;
-    string R25;
-    string R26;
-    string R27;
-    string R28;
-    string R29;
-    string R30;
-    string R31;
+    /******************************************************
+    ******************************************************/
 
-    int tadd = 0x00400000;
-    int dadd = 0x10000000;
-    int PC = 0x00400000;
-
+    // input file parsing
     ifstream fin;
     fin.open(input_file);
     string line;
@@ -179,12 +169,18 @@ int main(int argc, char** argv){
         code.push_back(line);
     }
     fin.close();
-
+    
+    // std::cout << "< check code input >" << std::endl;
     // for(auto i : code){
-    //     cout << i << endl;
+    //     std::cout << i << std::endl;
     // }
+    // std::cout << std::endl;
 
 
+    /******************************************************
+    ******************************************************/
+
+    // calculate text and data size
     string shex_tsize = code[0].substr(2);
     string shex_dsize = code[1].substr(2);
 
@@ -193,22 +189,24 @@ int main(int argc, char** argv){
     int idec_tsize = buf_idec_tsize/4;
     int idec_dsize = buf_idec_dsize/4;
 
-    // cout << "< check text and data size >" << endl;
-    // cout << "idec_tsize : " << idec_tsize << endl;
-    // cout << "idec_dsize : " << idec_dsize << endl;
-    // cout << endl;
-    
+    // std::cout << "< check text and data size >" << std::endl;
+    // std::cout << "idec_tsize : " << idec_tsize << std::endl;
+    // std::cout << "idec_dsize : " << idec_dsize << std::endl;
+    // std::cout << std::endl;
+
+    // make string hexadecimal code vector
     vector<string> shex_tcode;
     for(int i=2; i<idec_tsize+2; i++){
         shex_tcode.push_back(code[i]);
     }
 
-    cout << "< check shex_tcode >" << endl;
-    for(auto i:shex_tcode){
-        cout << i << endl;
-    }
-    cout << endl;
+    // std::cout << "< check shex_tcode >" << std::endl;
+    // for(auto i:shex_tcode){
+    //     std::cout << i << std::endl;
+    // }
+    // std::cout << std::endl;
 
+    // make string binary code vector
     vector<string> sbin_tcode;
     for(int i=0; i<shex_tcode.size(); i++){
         string sbin = shex2sbin(shex_tcode[i]);
@@ -217,51 +215,89 @@ int main(int argc, char** argv){
         sbin_tcode.push_back(buffer);
     }
 
-    cout << "< check binary text code >" << endl;
-    for(auto i : sbin_tcode){
-        cout << i << endl;
-    }
-    cout << endl;
+    // std::cout << "< check binary text code >" << std::endl;
+    // for(auto i : sbin_tcode){
+    //     std::cout << i << std::endl;
+    // }
+    // std::cout << std::endl;
 
+    // mapping the address and hexadecimal code
+    int tadd = 0x00400000;
+    // int dadd = 0x10000000;
     map<int, string> tgroup;
-    map<int, string> dgroup;
+    // map<int, string> dgroup;
 
     for(int i=0; i<sbin_tcode.size(); i++){
-        tadd += 4;
         tgroup.insert({tadd, shex_tcode[i]});
+        tadd += 4;
     }
 
-    cout << "< check address >" << endl;
-    for(map<int, string>::iterator it = tgroup.begin(); it != tgroup.end(); ++it){
+    // std::cout << "< check address >" << std::endl;
+    // for(map<int, string>::iterator it = tgroup.begin(); it != tgroup.end(); ++it){
 
-        cout << it->first << " : " << it->second << endl;
-    }
-    cout << endl;
+    //     std::cout << it->first << " : " << it->second << std::endl;
+    // }
+    // std::cout << std::endl;
+
+
+    /******************************************************
+    ******************************************************/
     
-    // dgroup.insert({str[i], dadd});
+    std::cout << "Current register values:" << std::endl;
+    std::cout << "--------------------------------" << std::endl;
+    
+    // register condition
+    vector<string> reg;
+    for(int i=0; i<32; i++){
+        reg[i] = "0x0";
+    }
 
-    cout << "< CONSOLE HERE !!! >" << endl;
-    cout << "Current register values:" << endl;
-    cout << "--------------------------------" << endl;
-    cout << "PC:" << PC << endl;
-    cout << "Registers:" << endl;
-    cout << endl;
-    cout << "Memory content [" << start_address << ".." << end_address << "]:" << endl;
-    cout << "--------------------------------" << endl;
-    for(map<int, string>::iterator it = tgroup.begin(); it != tgroup.end(); ++it){
-        int idec_address = it->first;
-        string sdec_address = to_string(idec_address);
-        string shex_address = sdec2shex(sdec_address);
+    int pc = 0x00400000;
+    
+    if(d_option == 0){
+        std::cout << "PC: 0x" << hex << pc << std::endl;
+        std::cout << "Registers:" << std::endl;
+        for(int i=0; i<reg.size(); i++){
+            std::cout << "R" << i << ": " << reg[i] << std::endl;
+        }
+        std::cout << std::endl;
+    }
+    else{
         
-        cout << shex_address << ": " << it->second << endl;
     }
-    
-    cout << endl;
 
+    // print m option
+    if(m_option == 1){
+        std::cout << "Memory content [0x" << hex << sadd << "..0x" << hex << eadd << "]:" << std::endl;
+        std::cout << "--------------------------------" << std::endl;
+        // text data
+        if((sadd >= 0x00400000 && sadd < 0x10000000) || sadd >= 0x10000000){
+            auto iter = tgroup.find(sadd);
+            if(iter == tgroup.end()){
+                for(int i=sadd; i<=eadd; i+=4){
+                    cout << "0x" << hex << i << ": 0x0" << endl; 
+                }
+            }
+            else{
+                int mapping_end_add;
+                for(map<int, string>::iterator it = tgroup.begin(); it != tgroup.end(); ++it){
+                    int idec_add = it->first;
+                    // std::cout << idec_add << ": " << it->second << std::endl;
+                    if(idec_add > eadd) break;
 
-    /**************************
-     MAKE EMULATOR with option
-    **************************/
+                    string sdec_add = to_string(idec_add);
+                    string shex_add = sdec2shex(sdec_add);
+                    std::cout << shex_add << ": " << it->second << std::endl;
+                    mapping_end_add = idec_add;
+                }
+                if(mapping_end_add < eadd){
+                    for(int i=mapping_end_add; i<=eadd; i+=4){
+                        cout << "0x" << hex << i << ": 0x0" << endl; 
+                    }
+                }
+            }  
+        }
+    }
 
     return 0;
 }
