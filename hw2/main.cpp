@@ -3,6 +3,9 @@
 #include <sstream>
 #include <vector>
 #include <fstream>
+#include <stdlib.h>
+#include <map>
+#include <cstdio>
 
 using namespace std;
 
@@ -30,6 +33,20 @@ string shex2sbin(string sHex){
         }
     }
     return sReturn;
+}
+
+string sbin2shex(string str) {
+    stringstream ss;
+    ss << "0x" << hex << stoll(str, NULL, 2);
+    str = ss.str();
+    return str;
+}
+
+string sdec2shex(string str) {
+    stringstream ss;
+    ss << "0x" << hex << stoll(str, NULL, 10);
+    str = ss.str();
+    return str;
 }
 
 string zeroExtension(string str){
@@ -60,9 +77,9 @@ int main(int argc, char** argv){
     int n_option = 0;
 
     vector<string> input_arguments;
-    string addr1;
-    string addr2;
-    string num_of_instruction;
+    string string_start_address;
+    string string_end_address;
+    string string_num_of_instruction;
     string input_file;
 
     // arguments parsing
@@ -70,10 +87,6 @@ int main(int argc, char** argv){
         string str(argv[i]);
         input_arguments.push_back(str);
     }
-
-    // for(int i=0; i<input_arguments.size(); i++){
-    //     cout << i << "번 째 원소 : " << input_arguments[i] << endl;
-    // }
 
     // data parsing
     for(int i=0; i<input_arguments.size(); i++){
@@ -86,8 +99,8 @@ int main(int argc, char** argv){
             while(getline(ss, buffer, ':')){
                 v.push_back(buffer);
             }
-            addr1 = v[0];
-            addr2 = v[1];
+            string_start_address = v[0];
+            string_end_address = v[1];
         }
 
         if(input_arguments[i] == "-d"){
@@ -96,7 +109,7 @@ int main(int argc, char** argv){
         
         if(input_arguments[i] == "-n"){
             n_option = 1;
-            num_of_instruction = input_arguments[i+1];
+            string_num_of_instruction = input_arguments[i+1];
         }
         
         if(i == input_arguments.size() - 1){
@@ -104,23 +117,22 @@ int main(int argc, char** argv){
         }
     }
 
-    // cout << "addr1 : " << addr1 << endl;
-    // cout << "addr2 : " << addr2 << endl;
-    // cout << "input_file : " << input_file << endl;
+    string_start_address = string_start_address.substr(2);
+    string_end_address = string_end_address.substr(2);
+    int start_address = stoi(string_start_address);
+    int end_address = stoi(string_end_address);
+    int num_of_instruction = stoi(string_num_of_instruction);
 
-    /**************************
-     MAKE EMULATOR with option
-    **************************/
+    // cout << "< check options >" << endl;
+    // cout << "start_address : " << start_address << endl;
+    // cout << "end_address : " << end_address << endl;
+    // cout << "num_of_instruction : " << num_of_instruction << endl;
+    // cout << "input_file : " << input_file << endl;
+    // cout << endl;
 
     /******************
      input file parsing
     ******************/
-
-    int tadd = 0x00400000;
-    int dadd = 0x10000000;
-    int PC = 0x00400000;
-    int tsize = 0;
-    int dsize = 0;
     
     string R0;
     string R1;
@@ -155,11 +167,14 @@ int main(int argc, char** argv){
     string R30;
     string R31;
 
+    int tadd = 0x00400000;
+    int dadd = 0x10000000;
+    int PC = 0x00400000;
+
     ifstream fin;
     fin.open(input_file);
     string line;
     vector<string> code;
-
     while(getline(fin, line)){
         code.push_back(line);
     }
@@ -169,21 +184,84 @@ int main(int argc, char** argv){
     //     cout << i << endl;
     // }
 
-    vector<string> bincode;
-    tsize = stoi(code[0].substr(2));
-    dsize = stoi(code[1].substr(2));
-    for(int i=2; i<code.size(); i++){
-        string sbin = shex2sbin(code[i]);
-        string buffer = zeroExtension(sbin);
 
-        bincode.push_back(buffer);
+    string shex_tsize = code[0].substr(2);
+    string shex_dsize = code[1].substr(2);
+
+    int buf_idec_tsize = (int)strtol(shex_tsize.c_str(), NULL, 16);
+    int buf_idec_dsize = (int)strtol(shex_dsize.c_str(), NULL, 16);
+    int idec_tsize = buf_idec_tsize/4;
+    int idec_dsize = buf_idec_dsize/4;
+
+    // cout << "< check text and data size >" << endl;
+    // cout << "idec_tsize : " << idec_tsize << endl;
+    // cout << "idec_dsize : " << idec_dsize << endl;
+    // cout << endl;
+    
+    vector<string> shex_tcode;
+    for(int i=2; i<idec_tsize+2; i++){
+        shex_tcode.push_back(code[i]);
     }
-    cout << endl;
-    cout << endl;
 
-    for(auto i : bincode){
+    cout << "< check shex_tcode >" << endl;
+    for(auto i:shex_tcode){
         cout << i << endl;
     }
+    cout << endl;
+
+    vector<string> sbin_tcode;
+    for(int i=0; i<shex_tcode.size(); i++){
+        string sbin = shex2sbin(shex_tcode[i]);
+        string buffer = zeroExtension(sbin);
+
+        sbin_tcode.push_back(buffer);
+    }
+
+    cout << "< check binary text code >" << endl;
+    for(auto i : sbin_tcode){
+        cout << i << endl;
+    }
+    cout << endl;
+
+    map<int, string> tgroup;
+    map<int, string> dgroup;
+
+    for(int i=0; i<sbin_tcode.size(); i++){
+        tadd += 4;
+        tgroup.insert({tadd, shex_tcode[i]});
+    }
+
+    cout << "< check address >" << endl;
+    for(map<int, string>::iterator it = tgroup.begin(); it != tgroup.end(); ++it){
+
+        cout << it->first << " : " << it->second << endl;
+    }
+    cout << endl;
+    
+    // dgroup.insert({str[i], dadd});
+
+    cout << "< CONSOLE HERE !!! >" << endl;
+    cout << "Current register values:" << endl;
+    cout << "--------------------------------" << endl;
+    cout << "PC:" << PC << endl;
+    cout << "Registers:" << endl;
+    cout << endl;
+    cout << "Memory content [" << start_address << ".." << end_address << "]:" << endl;
+    cout << "--------------------------------" << endl;
+    for(map<int, string>::iterator it = tgroup.begin(); it != tgroup.end(); ++it){
+        int idec_address = it->first;
+        string sdec_address = to_string(idec_address);
+        string shex_address = sdec2shex(sdec_address);
+        
+        cout << shex_address << ": " << it->second << endl;
+    }
+    
+    cout << endl;
+
+
+    /**************************
+     MAKE EMULATOR with option
+    **************************/
 
     return 0;
 }
