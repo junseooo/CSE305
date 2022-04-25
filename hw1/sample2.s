@@ -5,7 +5,7 @@ main:
     la $8, var
     lw $9, 0($8)
     addu $2, $0, $9
-    jal sum
+    jal sum 
     j exit
 
 sum: sltiu $1, $2, 1
