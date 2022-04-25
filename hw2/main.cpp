@@ -117,12 +117,12 @@ int sbin2signedint(string str){
 vector<string> setReg(int cpc, map<int, string> map, vector<string> reg){
     auto iter = map.find(cpc);
     if(iter == map.end()){
-        // cout << "there is no correct instruction" << endl;
+        // std::cout << "there is no correct instruction" << std::endl;
         return reg;
     }
     else{
         string str = map[cpc];
-        // cout << str << endl;
+        // std::cout << str << std::endl;
         string op = str.substr(0,6);
         string rs = str.substr(6,5);
         string rt = str.substr(11,5);
@@ -132,30 +132,30 @@ vector<string> setReg(int cpc, map<int, string> map, vector<string> reg){
         string imm = str.substr(16,16);
         string tar = str.substr(6,26);
 
-        // cout << "op : " << op << endl;
-        // cout << "rs : " << rs << endl;
-        // cout << "rt : " << rt << endl;
-        // cout << "rd : " << rd << endl;
-        // cout << "shamt : " << shamt << endl;
-        // cout << "funct : " << funct << endl;
-        // cout << "imm : " << imm << endl;
-        // cout << "tar : " << tar << endl;
-        // cout << endl;
+        // std::cout << "op : " << op << std::endl;
+        // std::cout << "rs : " << rs << std::endl;
+        // std::cout << "rt : " << rt << std::endl;
+        // std::cout << "rd : " << rd << std::endl;
+        // std::cout << "shamt : " << shamt << std::endl;
+        // std::cout << "funct : " << funct << std::endl;
+        // std::cout << "imm : " << imm << std::endl;
+        // std::cout << "tar : " << tar << std::endl;
+        // std::cout << std::endl;
 
         op = sbin2shex(op);
         funct = sbin2shex(funct);
         imm = sbin2shex(imm);
         tar = sbin2shex(tar);
 
-        // cout << "op : " << op << endl;
-        // cout << "rs : " << rs << endl;
-        // cout << "rt : " << rt << endl;
-        // cout << "rd : " << rd << endl;
-        // cout << "shamt : " << shamt << endl;
-        // cout << "funct : " << funct << endl;
-        // cout << "imm : " << imm << endl;
-        // cout << "tar : " << tar << endl;
-        // cout << endl;
+        // std::cout << "op : " << op << std::endl;
+        // std::cout << "rs : " << rs << std::endl;
+        // std::cout << "rt : " << rt << std::endl;
+        // std::cout << "rd : " << rd << std::endl;
+        // std::cout << "shamt : " << shamt << std::endl;
+        // std::cout << "funct : " << funct << std::endl;
+        // std::cout << "imm : " << imm << std::endl;
+        // std::cout << "tar : " << tar << std::endl;
+        // std::cout << std::endl;
 
         int irs = stoi(rs, 0, 2);
         int irt = stoi(rt, 0, 2);
@@ -165,12 +165,12 @@ vector<string> setReg(int cpc, map<int, string> map, vector<string> reg){
         int iimm = strtol(imm.c_str(), NULL, 16);
         // int itar = strtol(tar.c_str(), NULL, 26);
 
-        // cout << "int rs index : " << irs << endl;
-        // cout << "int rt index : " << irt << endl;
-        // cout << "int rd index : " << ird << endl;
-        // cout << "int shamt : " << ishamt << endl;
-        // cout << "int imm : " << iimm << endl;
-        // cout << endl;
+        // std::cout << "int rs index : " << irs << std::endl;
+        // std::cout << "int rt index : " << irt << std::endl;
+        // std::cout << "int rd index : " << ird << std::endl;
+        // std::cout << "int shamt : " << ishamt << std::endl;
+        // std::cout << "int imm : " << iimm << std::endl;
+        // std::cout << std::endl;
 
         string str_rs_val = reg[irs];
         int int_rs_val = (int)strtol(str_rs_val.c_str(), NULL, 16);
@@ -257,7 +257,7 @@ vector<string> setReg(int cpc, map<int, string> map, vector<string> reg){
         if(op == "0x9"){ // addiu
             string sbin_imm = shex2sbin(imm);
             sbin_imm = zeroExtension(sbin_imm, 16);
-            // cout << sbin_imm << endl;
+            // std::cout << sbin_imm << std::endl;
             if(sbin_imm[0] == '1'){ // minus
                 int i_val = sbin2signedint(sbin_imm);
                 int res = int_rs_val + i_val;
@@ -385,39 +385,28 @@ vector<string> setReg(int cpc, map<int, string> map, vector<string> reg){
             pc+=4;
         }
         if(op == "0x28"){ // sb
-            cout << "sb" << endl;
-            cout << "int_rt_val : " << int_rt_val << endl;
+            // std::cout << "sb" << std::endl;
+            // std::cout << "int_rt_val : " << int_rt_val << std::endl;
             
             string sbin_val = bitset<32>(int_rt_val).to_string();
-            cout << "sbin_val : " << sbin_val << endl;
+            // std::cout << "sbin_val : " << sbin_val << std::endl;
 
             string buffer = sbin_val.substr(24);
-            cout << "buffer : " << buffer << endl;
+            // std::cout << "buffer : " << buffer << std::endl;
 
             buffer = zeroExtension(buffer, 32);
-            cout << "buffer : " << buffer << endl;
+            // std::cout << "buffer : " << buffer << std::endl;
 
             // unsigned long long ull_val = strtoul(buffer.c_str(), NULL, 2);
             // int i_val = ull_val;
-            // cout << "i_val : " << i_val << endl;
+            // std::cout << "i_val : " << i_val << std::endl;
 
             int target_add = int_rs_val + 4 * iimm;
-            cout << "target_add : " << target_add << endl;
+            // std::cout << "target_add : " << target_add << std::endl;
 
             map = dgroup;
 
             map.insert({target_add, buffer});
-
-            cout << "< check data code address >" << endl;
-            auto it = map.begin();
-            for(it = map.begin(); it != map.end(); ++it){
-                cout << it->first << " : " << it->second << endl;
-                // string sbin_code = it->second;
-                // unsigned long long ull_code = strtoul(sbin_code.c_str(), NULL, 2);
-
-                // cout << dec << it-> first << " : 0x" << hex << ull_code << endl;
-            }
-            cout << endl;
 
             pc+=4;
 
@@ -500,12 +489,12 @@ int main(int argc, char** argv){
         }
     }
 
-    // cout << "< check options >" << endl;
-    // cout << "sadd : " << sadd << endl;
-    // cout << "eadd : " << eadd << endl;
-    // cout << "num_of_instruction : " << num_of_instruction << endl;
-    // cout << "input_file : " << input_file << endl;
-    // cout << endl;
+    // std::cout << "< check options >" << std::endl;
+    // std::cout << "sadd : " << sadd << std::endl;
+    // std::cout << "eadd : " << eadd << std::endl;
+    // std::cout << "num_of_instruction : " << num_of_instruction << std::endl;
+    // std::cout << "input_file : " << input_file << std::endl;
+    // std::cout << std::endl;
 
 
     /******************************************************
@@ -521,11 +510,11 @@ int main(int argc, char** argv){
     }
     fin.close();
     
-    // cout << "< check code input >" << endl;
+    // std::cout << "< check code input >" << std::endl;
     // for(auto i : code){
-    //     cout << i << endl;
+    //     std::cout << i << std::endl;
     // }
-    // cout << endl;
+    // std::cout << std::endl;
     
     // vector<string> reg;
     for(int i=0; i<32; i++){
@@ -535,66 +524,64 @@ int main(int argc, char** argv){
     /******************************************************
      * if there is an empty vector code
     ******************************************************/
-    if(code.empty()){
-        if(n_option == 1){
-            cout << "Current register values:" << endl;
-                cout << "--------------------------------" << endl;
-                cout << "PC: " << sdec2shex(to_string(pc)) << endl;
-                cout << "Registers:" << endl;
-                for(int i=0; i<reg.size(); i++){
-                    cout << "R" << dec << i << ": " << reg[i] << endl;
-                }
-            cout << endl;
-        }
-        if(m_option == 1){
-            cout << "Memory content [0x" << hex << sadd << "..0x" << hex << eadd << "]:" << endl;
-            cout << "--------------------------------" << endl;
-            // text data
-            if((sadd >= 0x00400000 && sadd < 0x10000000) || sadd >= 0x10000000){
-                map<int, string> group;
-                if(sadd >= 0x00400000 && sadd < 0x10000000) group = tgroup;
-                if(sadd >= 0x10000000) group = dgroup;
+    // if(code.empty()){
+    //     std::cout << "the code vector is empty!" << std::endl;
+    //     if(n_option == 1){
+    //         std::cout << "Current register values:" << std::endl;
+    //             std::cout << "--------------------------------" << std::endl;
+    //             std::cout << "PC: " << sdec2shex(to_string(pc)) << std::endl;
+    //             std::cout << "Registers:" << std::endl;
+    //             for(int i=0; i<reg.size(); i++){
+    //                 std::cout << "R" << dec << i << ": " << reg[i] << std::endl;
+    //             }
+    //         std::cout << std::endl;
+    //     }
+    //     if(m_option == 1){
+    //         std::cout << "Memory content [0x" << hex << sadd << "..0x" << hex << eadd << "]:" << std::endl;
+    //         std::cout << "--------------------------------" << std::endl;
+    //         // text data
+    //         if((sadd >= 0x00400000 && sadd < 0x10000000) || sadd >= 0x10000000){
+    //             map<int, string> group;
+    //             if(sadd >= 0x00400000 && sadd < 0x10000000) group = tgroup;
+    //             if(sadd >= 0x10000000) group = dgroup;
 
-                auto iter = group.find(sadd);
-                if(iter == group.end()){
-                    for(int i=sadd; i<=eadd; i+=4){
-                        cout << "0x" << hex << i << ": 0x0" << endl; 
-                    }
-                }
-                else{
-                    int mapping_end_add;
+    //             auto iter = group.find(sadd);
+    //             if(iter == group.end()){
+    //                 for(int i=sadd; i<=eadd; i+=4){
+    //                     std::cout << "0x" << hex << i << ": 0x0" << std::endl; 
+    //                 }
+    //             }
+    //             else{
+    //                 int mapping_end_add;
                     
-                    // 중간에 mapping된 데이터 무시되는거 해결해야함
-                    // auto it = group.end();
-                    // cout << "last mapping address : " << it -> second << endl;
+    //                 // 중간에 mapping된 데이터 무시되는거 해결해야함
+    //                 // auto it = group.end();
+    //                 // std::cout << "last mapping address : " << it -> second << std::endl;
 
-                    for(map<int, string>::iterator it = group.begin(); it != group.end(); ++it){
-                        int idec_add = it->first;
-                        // cout << idec_add << ": " << it->second << endl;
-                        if(idec_add > eadd) break;
+    //                 for(map<int, string>::iterator it = group.begin(); it != group.end(); ++it){
+    //                     int idec_add = it->first;
+    //                     // std::cout << idec_add << ": " << it->second << std::endl;
+    //                     if(idec_add > eadd) break;
 
-                        string sdec_add = to_string(idec_add);
-                        string shex_add = sdec2shex(sdec_add);
+    //                     string sdec_add = to_string(idec_add);
+    //                     string shex_add = sdec2shex(sdec_add);
                         
-                        string sbin_code = it->second;
-                        unsigned long long ull_code = strtoul(sbin_code.c_str(), NULL, 2);
-                        cout << shex_add << ": 0x" << hex << ull_code << endl;
-                        mapping_end_add = idec_add;
-                    }
-                    if(mapping_end_add < eadd){
-                        for(int i=mapping_end_add+4; i<=eadd; i+=4){
-                            cout << "0x" << hex << i << ": 0x0" << endl;
-                        }
-                    }
-                }
-            }
-            cout << endl;
-        }
+    //                     string sbin_code = it->second;
+    //                     unsigned long long ull_code = strtoul(sbin_code.c_str(), NULL, 2);
+    //                     std::cout << shex_add << ": 0x" << hex << ull_code << std::endl;
+    //                     mapping_end_add = idec_add;
+    //                 }
+    //                 if(mapping_end_add < eadd){
+    //                     for(int i=mapping_end_add+4; i<=eadd; i+=4){
+    //                         std::cout << "0x" << hex << i << ": 0x0" << std::endl;
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //         std::cout << std::endl;
+    //     }
 
-
-        
-
-    }
+    // }
 
 
     
@@ -613,10 +600,10 @@ int main(int argc, char** argv){
     int idec_tsize = buf_idec_tsize/4;
     int idec_dsize = buf_idec_dsize/4;
 
-    // cout << "< check text and data size >" << endl;
-    // cout << "idec_tsize : " << idec_tsize << endl;
-    // cout << "idec_dsize : " << idec_dsize << endl;
-    // cout << endl;
+    // std::cout << "< check text and data size >" << std::endl;
+    // std::cout << "idec_tsize : " << idec_tsize << std::endl;
+    // std::cout << "idec_dsize : " << idec_dsize << std::endl;
+    // std::cout << std::endl;
 
 
 
@@ -626,11 +613,11 @@ int main(int argc, char** argv){
         shex_tcode.push_back(code[i]);
     }
 
-    // cout << "< check shex_tcode >" << endl;
+    // std::cout << "< check shex_tcode >" << std::endl;
     // for(auto i:shex_tcode){
-    //     cout << i << endl;
+    //     std::cout << i << std::endl;
     // }
-    // cout << endl;
+    // std::cout << std::endl;
 
     vector<string> sbin_tcode;
     for(int i=0; i<shex_tcode.size(); i++){
@@ -639,27 +626,27 @@ int main(int argc, char** argv){
 
         sbin_tcode.push_back(buffer);
     }
-    cout << endl;
+    std::cout << std::endl;
 
-    // cout << "< check binary text code >" << endl;
+    // std::cout << "< check binary text code >" << std::endl;
     // for(auto i : sbin_tcode){
-    //     cout << i << endl;
+    //     std::cout << i << std::endl;
     // }
-    // cout << endl;
+    // std::cout << std::endl;
 
     for(int i=0; i<sbin_tcode.size(); i++){
         tgroup.insert({tadd, sbin_tcode[i]});
         tadd += 4;
     }
 
-    // cout << "< check text code address >" << endl;
+    // std::cout << "< check text code address >" << std::endl;
     // for(map<int, string>::iterator it = tgroup.begin(); it != tgroup.end(); ++it){
     //     string sbin_code = it->second;
     //     unsigned long long ull_code = strtoul(sbin_code.c_str(), NULL, 2);
 
-    //     cout << dec << it-> first << " : 0x" << hex << ull_code << endl;
+    //     std::cout << dec << it-> first << " : 0x" << hex << ull_code << std::endl;
     // }
-    // cout << endl;
+    // std::cout << std::endl;
 
 
 
@@ -670,11 +657,11 @@ int main(int argc, char** argv){
         shex_dcode.push_back(code[i]);
     }
 
-    // cout << "< check shex_dcode >" << endl;
+    // std::cout << "< check shex_dcode >" << std::endl;
     // for(auto i:shex_dcode){
-    //     cout << i << endl;
+    //     std::cout << i << std::endl;
     // }
-    // cout << endl;
+    // std::cout << std::endl;
 
     vector<string> sbin_dcode;
     for(int i=0; i<shex_dcode.size(); i++){
@@ -684,24 +671,28 @@ int main(int argc, char** argv){
         sbin_dcode.push_back(buffer);
     }
 
+    // for(int i=dadd; i=0x10001000; i+=4){
+    //     dgroup.insert({i, "00000000000000000000000000000000"});
+    // }
+
     for(int i=0; i<sbin_dcode.size(); i++){
-        dgroup.insert({dadd, sbin_dcode[i]});
+        dgroup[dadd] = sbin_dcode[i];
         dadd += 4;
     }
 
-    // cout << "< check data code address >" << endl;
+    // std::cout << "< check data code address >" << std::endl;
     // for(map<int, string>::iterator it = dgroup.begin(); it != dgroup.end(); ++it){
-    //     cout << it->first << " : " << it->second << endl;
+    //     std::cout << it->first << " : " << it->second << std::endl;
 
 
         // string sbin_code = it->second;
         // unsigned long long ull_code = strtoul(sbin_code.c_str(), NULL, 2);
 
-        // cout << dec << it-> first << " : 0x" << hex << ull_code << endl;
+        // std::cout << dec << it-> first << " : 0x" << hex << ull_code << std::endl;
 
 
     // }
-    // cout << endl;
+    // std::cout << std::endl;
 
     
 
@@ -733,18 +724,18 @@ int main(int argc, char** argv){
             }
         }
 
-        cout << "Current register values:" << endl;
-        cout << "--------------------------------" << endl;
-        cout << "PC: " << sdec2shex(to_string(pc)) << endl;
-        cout << "Registers:" << endl;
+        std::cout << "Current register values:" << std::endl;
+        std::cout << "--------------------------------" << std::endl;
+        std::cout << "PC: " << sdec2shex(to_string(pc)) << std::endl;
+        std::cout << "Registers:" << std::endl;
         for(int i=0; i<reg.size(); i++){
-            cout << "R" << dec << i << ": " << reg[i] << endl;
+            std::cout << "R" << dec << i << ": " << reg[i] << std::endl;
         }
-        cout << endl;
+        std::cout << std::endl;
 
         if(m_option == 1){
-            cout << "Memory content [0x" << hex << sadd << "..0x" << hex << eadd << "]:" << endl;
-            cout << "--------------------------------" << endl;
+            std::cout << "Memory content [0x" << hex << sadd << "..0x" << hex << eadd << "]:" << std::endl;
+            std::cout << "--------------------------------" << std::endl;
             // text data
             if((sadd >= 0x00400000 && sadd < 0x10000000) || sadd >= 0x10000000){
                 map<int, string> group;
@@ -754,7 +745,7 @@ int main(int argc, char** argv){
                 auto iter = group.find(sadd);
                 if(iter == group.end()){
                     for(int i=sadd; i<=eadd; i+=4){
-                        cout << "0x" << hex << i << ": 0x0" << endl; 
+                        std::cout << "0x" << hex << i << ": 0x0" << std::endl; 
                     }
                 }
                 else{
@@ -762,11 +753,11 @@ int main(int argc, char** argv){
                     
                     // 중간에 mapping된 데이터 무시되는거 해결해야함
                     // auto it = group.end();
-                    // cout << "last mapping address : " << it -> second << endl;
+                    // std::cout << "last mapping address : " << it -> second << std::endl;
 
                     for(map<int, string>::iterator it = group.begin(); it != group.end(); ++it){
                         int idec_add = it->first;
-                        // cout << idec_add << ": " << it->second << endl;
+                        // std::cout << idec_add << ": " << it->second << std::endl;
                         if(idec_add > eadd) break;
 
                         string sdec_add = to_string(idec_add);
@@ -774,17 +765,17 @@ int main(int argc, char** argv){
                         
                         string sbin_code = it->second;
                         unsigned long long ull_code = strtoul(sbin_code.c_str(), NULL, 2);
-                        cout << shex_add << ": 0x" << hex << ull_code << endl;
+                        std::cout << shex_add << ": 0x" << hex << ull_code << std::endl;
                         mapping_end_add = idec_add;
                     }
                     if(mapping_end_add < eadd){
                         for(int i=mapping_end_add+4; i<=eadd; i+=4){
-                            cout << "0x" << hex << i << ": 0x0" << endl;
+                            std::cout << "0x" << hex << i << ": 0x0" << std::endl;
                         }
                     }
                 }
             }
-            cout << endl;
+            std::cout << std::endl;
         }
     }
 
@@ -804,18 +795,18 @@ int main(int argc, char** argv){
 
                 reg = setReg(pc, tgroup, reg);
 
-                cout << "Current register values:" << endl;
-                cout << "--------------------------------" << endl;
-                cout << "PC: " << sdec2shex(to_string(pc)) << endl;
-                cout << "Registers:" << endl;
+                std::cout << "Current register values:" << std::endl;
+                std::cout << "--------------------------------" << std::endl;
+                std::cout << "PC: " << sdec2shex(to_string(pc)) << std::endl;
+                std::cout << "Registers:" << std::endl;
                 for(int i=0; i<reg.size(); i++){
-                    cout << "R" << dec << i << ": " << reg[i] << endl;
+                    std::cout << "R" << dec << i << ": " << reg[i] << std::endl;
                 }
-                cout << endl;
+                std::cout << std::endl;
 
                 if(m_option == 1){
-                    cout << "Memory content [0x" << hex << sadd << "..0x" << hex << eadd << "]:" << endl;
-                    cout << "--------------------------------" << endl;
+                    std::cout << "Memory content [0x" << hex << sadd << "..0x" << hex << eadd << "]:" << std::endl;
+                    std::cout << "--------------------------------" << std::endl;
                     // text data
                     if((sadd >= 0x00400000 && sadd < 0x10000000) || sadd >= 0x10000000){
                         map<int, string> group;
@@ -824,7 +815,7 @@ int main(int argc, char** argv){
                         auto iter = group.find(sadd);
                         if(iter == group.end()){
                             for(int i=sadd; i<=eadd; i+=4){
-                                cout << "0x" << hex << i << ": 0x0" << endl; 
+                                std::cout << "0x" << hex << i << ": 0x0" << std::endl; 
                             }
                         }
                         else{
@@ -838,18 +829,18 @@ int main(int argc, char** argv){
 
                                 string sbin_code = it->second;
                                 unsigned long long ull_code = strtoul(sbin_code.c_str(), NULL, 2);
-                                cout << shex_add << ": 0x" << hex << ull_code << endl;
+                                std::cout << shex_add << ": 0x" << hex << ull_code << std::endl;
 
                                 mapping_end_add = idec_add;
                             }
                             if(mapping_end_add < eadd){
                                 for(int i=mapping_end_add+4; i<=eadd; i+=4){
-                                    cout << "0x" << hex << i << ": 0x0" << endl; 
+                                    std::cout << "0x" << hex << i << ": 0x0" << std::endl; 
                                 }
                             }
                         }  
                     }
-                    cout << endl;
+                    std::cout << std::endl;
                 }
                 i++;
             }
@@ -866,18 +857,18 @@ int main(int argc, char** argv){
                 if(iter->second == "") break;
 
                 reg = setReg(pc, tgroup, reg);
-                cout << "Current register values:" << endl;
-                cout << "--------------------------------" << endl;
-                cout << "PC: " << sdec2shex(to_string(pc)) << endl;
-                cout << "Registers:" << endl;
+                std::cout << "Current register values:" << std::endl;
+                std::cout << "--------------------------------" << std::endl;
+                std::cout << "PC: " << sdec2shex(to_string(pc)) << std::endl;
+                std::cout << "Registers:" << std::endl;
                 for(int i=0; i<reg.size(); i++){
-                    cout << "R" << dec << i << ": " << reg[i] << endl;
+                    std::cout << "R" << dec << i << ": " << reg[i] << std::endl;
                 }
-                cout << endl;
+                std::cout << std::endl;
 
                 if(m_option == 1){
-                    cout << "Memory content [0x" << hex << sadd << "..0x" << hex << eadd << "]:" << endl;
-                    cout << "--------------------------------" << endl;
+                    std::cout << "Memory content [0x" << hex << sadd << "..0x" << hex << eadd << "]:" << std::endl;
+                    std::cout << "--------------------------------" << std::endl;
                     // text data
                     if((sadd >= 0x00400000 && sadd < 0x10000000) || sadd >= 0x10000000){
                         map<int, string> group;
@@ -886,7 +877,7 @@ int main(int argc, char** argv){
                         auto iter = group.find(sadd);
                         if(iter == group.end()){
                             for(int i=sadd; i<=eadd; i+=4){
-                                cout << "0x" << hex << i << ": 0x0" << endl; 
+                                std::cout << "0x" << hex << i << ": 0x0" << std::endl; 
                             }
                         }
                         else{
@@ -900,18 +891,18 @@ int main(int argc, char** argv){
                                 
                                 string sbin_code = it->second;
                                 unsigned long long ull_code = strtoul(sbin_code.c_str(), NULL, 2);
-                                cout << shex_add << ": 0x" << hex << ull_code << endl;
+                                std::cout << shex_add << ": 0x" << hex << ull_code << std::endl;
 
                                 mapping_end_add = idec_add;
                             }
                             if(mapping_end_add < eadd){
                                 for(int i=mapping_end_add+4; i<=eadd; i+=4){
-                                    cout << "0x" << hex << i << ": 0x0" << endl; 
+                                    std::cout << "0x" << hex << i << ": 0x0" << std::endl; 
                                 }
                             }
                         }  
                     }
-                    cout << endl;
+                    std::cout << std::endl;
                 }
             }
         }
