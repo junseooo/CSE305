@@ -180,8 +180,10 @@ vector<string> splitCode(string sbin, int type){
     return code_piece;
 }
 
+int num=0;
 void IF_stage(int npc){
     IF_reg = ID_reg;
+    num++;
     if(tgroup.find(npc) != tgroup.end()){
         string sbin = tgroup[npc];
         string sb_rs = sbin.substr(6,5);
@@ -932,34 +934,34 @@ int main(int argc, char** argv){
 
     while(tgroup.find(IF_input_pc) != tgroup.end()){
 
-        // cout << endl;
+        cout << endl;
 
-        // for(map<string,string>::iterator it = IF_ID_state_reg.begin(); it != IF_ID_state_reg.end(); ++it){
-        //     std::cout << it-> first << ": " << it-> second << std::endl;
-        // }
-        // cout << endl;
+        for(map<string,string>::iterator it = IF_ID_state_reg.begin(); it != IF_ID_state_reg.end(); ++it){
+            std::cout << it-> first << ": " << it-> second << std::endl;
+        }
+        cout << endl;
 
-        // for(map<string,string>::iterator it = ID_EX_state_reg.begin(); it != ID_EX_state_reg.end(); ++it){
-        //     std::cout << it-> first << ": " << it-> second << std::endl;
-        // }
-        // cout << endl;
+        for(map<string,string>::iterator it = ID_EX_state_reg.begin(); it != ID_EX_state_reg.end(); ++it){
+            std::cout << it-> first << ": " << it-> second << std::endl;
+        }
+        cout << endl;
 
-        // for(map<string,string>::iterator it = EX_MEM_state_reg.begin(); it != EX_MEM_state_reg.end(); ++it){
-        //     std::cout << it-> first << ": " << it-> second << std::endl;
-        // }
-        // cout << endl;
+        for(map<string,string>::iterator it = EX_MEM_state_reg.begin(); it != EX_MEM_state_reg.end(); ++it){
+            std::cout << it-> first << ": " << it-> second << std::endl;
+        }
+        cout << endl;
 
-        // for(map<string,string>::iterator it = MEM_WB_state_reg.begin(); it != MEM_WB_state_reg.end(); ++it){
-        //     std::cout << it-> first << ": " << it-> second << std::endl;
-        // }
-        // cout << endl;
+        for(map<string,string>::iterator it = MEM_WB_state_reg.begin(); it != MEM_WB_state_reg.end(); ++it){
+            std::cout << it-> first << ": " << it-> second << std::endl;
+        }
+        cout << endl;
 
-        // for(map<string,string>::iterator it = WB_IF_state_reg.begin(); it != WB_IF_state_reg.end(); ++it){
-        //     std::cout << it-> first << ": " << it-> second << std::endl;
-        // }
-        // cout << endl;
+        for(map<string,string>::iterator it = WB_IF_state_reg.begin(); it != WB_IF_state_reg.end(); ++it){
+            std::cout << it-> first << ": " << it-> second << std::endl;
+        }
+        cout << endl;
 
-        if(cycle > num_of_instruction) break;
+        if(num > num_of_instruction) break;
 
         std::cout << "===== Cycle " << cycle << " =====" << std::endl;
 
