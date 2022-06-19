@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <bitset>
 #include <cmath>
+#include <queue>
+#include <algorithm>
 
 using namespace std;
 
@@ -42,45 +44,9 @@ struct Data{
     bool valid = false;
     int tag = 0;
     vector<unsigned long long> block;
+    int lru_index = 0;
+    bool dirty = false;
 };
-
-// class Cache{
-// private:
-//     int way = 0;
-//     int set = 0;
-//     vector<Data> dataset;
-// public:
-//     Cache();
-//     Cache(int _way, int _set, vector<Data> _dataset){
-//         this->way = _way;
-//         this->set = _set;
-//         this->dataset = _dataset;
-//     }
-
-//     int getWay(){
-//         return way;
-//     }
-//     int getSet(){
-//         return set;
-//     }
-//     vector<Data> getDataset(){
-//         return dataset;
-//     }
-
-//     void setWay(int way){
-//         this->way = way;
-//     }
-//     void setSet(int set){
-//         this->set = set;
-//     }
-//     void setDataset(int index, bool valid, int tag, vector<unsigned long long> block){
-//         this->dataset[index].valid = valid;
-//         this->dataset[index].tag = tag;
-//         this->dataset[index].block = block;
-//     }
-// };
-
-
 
 
 
@@ -242,9 +208,11 @@ int main(int argc, char** argv){
     int L1_dirty_eviction = 0;
     int L2_dirty_eviction = 0;
     
+    queue<vector<unsigned long long>> q1;
+    queue<vector<unsigned long long>> q2;
 
     // for(int inst=0; inst<code.size(); inst++){
-    for(int inst=0; inst<10000; inst++){
+    for(int inst=0; inst<1000; inst++){
         string str = code[inst];
         istringstream ss(str);
         vector<string> split_str;
@@ -305,9 +273,6 @@ int main(int argc, char** argv){
         if(split_str[0] == "W"){
             write_access++;
             total_access++;
-
-
-
 
             // 일단 물리 주소에 해당하는 block을 만들어야함.
             // block size에 맞춰서 block을 만듦.
@@ -443,7 +408,79 @@ int main(int argc, char** argv){
                 // 정해준 L1_miss와 L2_miss에 따라 경우 나눠서 쓰기
                 if(L1_miss == true && L2_miss == true){
                     if(cache_replacement_policy == 1){ // lru
+                        // cout << "L2 write evict" << endl;
+                        
+                        int L2_evict_way = 0;
+                        vector<int> buffer2;
+                        
+                        for(int i=0; i<L2_cache.size(); i++){
+                            buffer2.push_back(L2_cache[i][L2_index].lru_index);
+                        }
+                        int max2 = *max_element(buffer2.begin(), buffer2.end());
+                        int min2 = *min_element(buffer2.begin(), buffer2.end());
 
+                        if(min2 != 0){
+                            for(int i=0; i<L2_cache.size(); i++){
+                                if(L2_cache[i][L2_index].lru_index == min2){
+                                    L2_evict_way = i + 1;
+                                }
+                            }
+                            for(int i=0; i<L2_cache.size(); i++){
+                                L2_cache[i][L2_index].lru_index--;
+                            }
+                            L2_cache[L2_evict_way-1][L2_index].valid = true;
+                            L2_cache[L2_evict_way-1][L2_index].tag = L2_tag;
+                            L2_cache[L2_evict_way-1][L2_index].block = L2_block;
+                            L2_cache[L2_evict_way-1][L2_index].lru_index = max2;
+                            L2_dirty_eviction++;
+                        }
+                        else{
+                            L2_evict_way = max2 + 1;
+                            L2_cache[L2_evict_way-1][L2_index].valid = true;
+                            L2_cache[L2_evict_way-1][L2_index].tag = L2_tag;
+                            L2_cache[L2_evict_way-1][L2_index].block = L2_block;
+                            L2_cache[L2_evict_way-1][L2_index].lru_index = L2_evict_way;
+                            L2_clean_eviction++;
+                        }
+
+
+                        // cout << "L1 write evict with L2 write evict" << endl;
+
+                        int L1_evict_way = 0;
+                        vector<int> buffer1;
+                        
+                        for(int i=0; i<L1_cache.size(); i++){
+                            buffer1.push_back(L1_cache[i][L1_index].lru_index);
+                        }
+                        int max1 = *max_element(buffer1.begin(), buffer1.end());
+                        int min1 = *min_element(buffer1.begin(), buffer1.end());
+
+                        if(min1 != 0){
+                            for(int i=0; i<L1_cache.size(); i++){
+                                if(L1_cache[i][L1_index].lru_index == min1){
+                                    L1_evict_way = i + 1;
+                                }
+                            }
+                            // cout << L1_cache.size() << endl;
+                            // cout << L1_evict_way << endl;
+
+                            for(int i=0; i<L1_cache.size(); i++){
+                                L1_cache[i][L1_index].lru_index--;
+                            }
+                            L1_cache[L1_evict_way-1][L1_index].valid = true;
+                            L1_cache[L1_evict_way-1][L1_index].tag = L1_tag;
+                            L1_cache[L1_evict_way-1][L1_index].block = L1_block;
+                            L1_cache[L1_evict_way-1][L1_index].lru_index = max1;
+                            L1_dirty_eviction++;
+                        }
+                        else{
+                            L1_evict_way = max1 + 1;
+                            L1_cache[L1_evict_way-1][L1_index].valid = true;
+                            L1_cache[L1_evict_way-1][L1_index].tag = L1_tag;
+                            L1_cache[L1_evict_way-1][L1_index].block = L1_block;
+                            L1_cache[L1_evict_way-1][L1_index].lru_index = L1_evict_way;
+                            L1_clean_eviction++;
+                        }
                     }
                     else{ // random
                         // cout << "L2 write evict" << endl;
@@ -453,7 +490,7 @@ int main(int argc, char** argv){
                         L2_cache[L2_evict_way-1][L2_index].tag = L2_tag;
                         L2_cache[L2_evict_way-1][L2_index].block = L2_block;
 
-                        L2_dirty_eviction++;
+                        L2_clean_eviction++;
 
                         // cout << "L1 write evict with L2 write evict" << endl;
                         int L1_evict_way = getRandomNumber(1, L1_way);
@@ -462,12 +499,43 @@ int main(int argc, char** argv){
                         L1_cache[L1_evict_way-1][L1_index].tag = L1_tag;
                         L1_cache[L1_evict_way-1][L1_index].block = L1_block;
                         
-                        L1_dirty_eviction++;
+                        L1_clean_eviction++;
                     }
                 }
-                else if(L1_miss == true && L2_miss == false){
+                else if(L1_miss == true && L2_miss == false){ // L2에서 hit
                     if(cache_replacement_policy == 1){ // lru
+                        int L1_evict_way = 0;
+                        vector<int> buffer1;
+                        
+                        for(int i=0; i<L1_cache.size(); i++){
+                            buffer1.push_back(L1_cache[i][L1_index].lru_index);
+                        }
+                        int max1 = *max_element(buffer1.begin(), buffer1.end());
+                        int min1 = *min_element(buffer1.begin(), buffer1.end());
 
+                        if(min1 != 0){
+                            for(int i=0; i<L1_cache.size(); i++){
+                                if(L1_cache[i][L1_index].lru_index == min1){
+                                    L1_evict_way = i + 1;
+                                }
+                            }
+                            for(int i=0; i<L1_cache.size(); i++){
+                                L1_cache[i][L1_index].lru_index--;
+                            }
+                            L1_cache[L1_evict_way-1][L1_index].valid = true;
+                            L1_cache[L1_evict_way-1][L1_index].tag = L1_tag;
+                            L1_cache[L1_evict_way-1][L1_index].block = L1_block;
+                            L1_cache[L1_evict_way-1][L1_index].lru_index = max1;
+                            L1_dirty_eviction++;
+                        }
+                        else{
+                            L1_evict_way = max1 + 1;
+                            L1_cache[L1_evict_way-1][L1_index].valid = true;
+                            L1_cache[L1_evict_way-1][L1_index].tag = L1_tag;
+                            L1_cache[L1_evict_way-1][L1_index].block = L1_block;
+                            L1_cache[L1_evict_way-1][L1_index].lru_index = L1_evict_way;
+                            L1_clean_eviction++;
+                        }
                     }
                     else{ // random
                         // cout << "L1 write evict" << endl;
@@ -482,18 +550,26 @@ int main(int argc, char** argv){
                 }
             }
 
-            else{ // L1 cache의 L1 index의 valid가 0, 즉 빈 칸이므로(L2도 빈칸이므로) 덮어 씌우면 됌
+            else{ // L1 cache의 L1 index의 valid가 0, 즉 빈 칸이므로(L2도 빈칸이므로) 0으로 차있는거 덮어 씌우면 됌
                 L1_write_miss++;
                 L1_cache[0][L1_index].valid = true;
                 L1_cache[0][L1_index].tag = L1_tag;
                 L1_cache[0][L1_index].block = L1_block;
-                L1_clean_eviction++;
+                if(cache_replacement_policy == 1){
+                    L1_cache[0][L1_index].lru_index = 1;
+                    // q1.push(L1_cache[0][L1_index].block);
+                }
+                L1_clean_eviction++; // dirty == false
 
                 L2_write_miss++;
                 L2_cache[0][L2_index].valid = true;
                 L2_cache[0][L2_index].tag = L2_tag;
                 L2_cache[0][L2_index].block = L2_block;
-                L2_clean_eviction++;
+                if(cache_replacement_policy == 1){
+                    L2_cache[0][L2_index].lru_index = 1;
+                    // q2.push(L2_cache[0][L2_index].block);
+                }
+                L2_clean_eviction++; // dirty == false
             }
         }
 
