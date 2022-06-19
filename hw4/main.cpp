@@ -10,68 +10,9 @@
 
 using namespace std;
 
-
-class Element{
-private:
-    int valid_bit;
-    string tag_bit;
-    int num_of_words_in_a_block;
-    vector<long long> block;
-public:
-    Element();
-    Element(int _valid_bit, string _tag_bit, int _num_of_words_in_a_block);
-    
-    int get_valid_bit();
-    string get_tag_bit();
-
-    void set_valid_bit(int valid_bit);
-    void set_tag_bit(string tag_bit);
-    void set_block_value(long long value);
-    
-    void get_block();
-    
-    Element(const Element& rhs){
-        this->valid_bit = rhs.valid_bit;
-        this->tag_bit = rhs.tag_bit;
-        this->num_of_words_in_a_block = rhs.num_of_words_in_a_block;
-        this->block = rhs.block;
-    }
-};
-Element::Element(int _valid_bit, string _tag_bit, int _num_of_words_in_a_block){
-    valid_bit = _valid_bit;
-    tag_bit = _tag_bit;
-    num_of_words_in_a_block = _num_of_words_in_a_block;
-    block[num_of_words_in_a_block];
-}
-int Element::get_valid_bit(){
-    return valid_bit;
-}
-void Element::set_valid_bit(int valid_bit){
-    this->valid_bit = valid_bit;
-}
-string Element::get_tag_bit(){
-    return tag_bit;
-}
-void Element::set_tag_bit(string tag_bit){
-    this->tag_bit = tag_bit;
-}
-void Element::set_block_value(long long value){
-    for(int i=0; i<this->num_of_words_in_a_block; i++){
-        this->block[i] = value + i*4;
-    }
-}
-void Element::get_block(){
-    for(int i=0; i<this->num_of_words_in_a_block; i++){
-        printf("0x%llx\n", this->block[i]);
-    }
-}
-
-
-
-
-long long shex2lldec(string str){
+unsigned long long shex2lldec(string str){
     str = str.substr(2);
-    long long num = strtoull(str.c_str(), NULL, 16);
+    unsigned long long num = strtoull(str.c_str(), NULL, 16);
     return num;
 }
 
@@ -142,45 +83,69 @@ int main(int argc, char** argv){
 
 
 
-    /***************************
-    make virtual cache structure
-    ***************************/
+    /**************************************
+        make virtual cache structure
+    **************************************/
 
-    int byte_offset_bit = 2; // word 단위로 하므로 같은 값 써도 무방
-    int num_of_words_in_a_block = block_size/4;
+    int total_address_bit = 64;
+    int word_size = 8;
+    int num_of_words_in_a_block = block_size/word_size;
+    
+    int byte_offset_bit = get_exponent(word_size);
     int block_offset_bit = get_exponent(num_of_words_in_a_block);
 
     int L1_index_bit = 10 + get_exponent(L1_capacity) - get_exponent(block_size) - get_exponent(L1_associativity);
     int L2_index_bit = 10 + get_exponent(L2_capacity) - get_exponent(block_size) - get_exponent(L2_associativity);
 
-    int L1_tag_bit = 32 - L1_index_bit - block_offset_bit - byte_offset_bit;
-    int L2_tag_bit = 32 - L2_index_bit - block_offset_bit - byte_offset_bit;
+    int L1_tag_bit = total_address_bit - L1_index_bit - block_offset_bit - byte_offset_bit;
+    int L2_tag_bit = total_address_bit - L2_index_bit - block_offset_bit - byte_offset_bit;
 
     // cout << "L1_tag_bit : " << L1_tag_bit << endl;
     // cout << "L1_index_bit : " << L1_index_bit << endl;
     // cout << "L2_tag_bit : " << L2_tag_bit << endl;
     // cout << "L2_index_bit : " << L2_index_bit << endl << endl;
     
-    int L1_row = pow(2, L1_index_bit);
-    int L2_row = pow(2, L2_index_bit);
+    int L1_set = pow(2, L1_index_bit);
+    int L2_set = pow(2, L2_index_bit);
 
-    int L1_column = pow(2, get_exponent(L1_associativity));
-    int L2_column = pow(2, get_exponent(L2_associativity));
+    int L1_way = pow(2, get_exponent(L1_associativity));
+    int L2_way = pow(2, get_exponent(L2_associativity));
 
-    // cout << "L1_row : " << L1_row << endl;
-    // cout << "L1_column : " << L1_column << endl;
-    // cout << "L2_row : " << L2_row << endl;
-    // cout << "L2_column : " << L2_column << endl;
+    cout << "L1_set : " << L1_set << endl;
+    cout << "L1_way : " << L1_way << endl;
+    cout << "L2_set : " << L2_set << endl;
+    cout << "L2_way : " << L2_way << endl << endl;
+
+    int size = 1 + 1 + num_of_words_in_a_block;
+
+    printf("size : %d\n", size);
+
+    unsigned long long L1[L1_way-1][L1_set-1][size-1];
+    unsigned long long L2[L2_way-1][L2_set-1][size-1];
+    
+    int cnt = 0;
+    for(int i=0; i<L1_way; i++){
+        for(int j=0; j<L1_set; j++){
+            for(int k=0; k<size; k++){
+                L1[i][j][k] = 0;
+                cnt++;
+                cout << cnt << " is done" << endl;
+            }
+        }
+    }
+    for(int i=0; i<L2_way; i++){
+        for(int j=0; j<L2_set; j++){
+            for(int k=0; k<size; k++){
+                L2[i][j][k] = 0;
+            }
+        }
+    }
 
 
-    /***********************************************
-    앞서 구한 row랑 column으로 빈 cache를 만들어 놓고 싶음
-    그러고 밑에서 W할 때 빈칸에다가 추가하는 식으로?
-    근데 Data 때문에 operator overriding 해야해서 그냥 vector로 다 넣어서 하니까
-    vector를 null로 지정한 후 만들려고 했는데 그게 안 됌...
+    /**************************************
+    **************************************/
 
-    일단 여기다가 vector<vector<Data>> 형식의 L1, L2 cache를 만드는게 급선무
-    ************************************************/
+
 
 
 
@@ -200,13 +165,13 @@ int main(int argc, char** argv){
     string s_inst = split_str[1];
     // printf("str : %s\n", s_inst.c_str());
 
-    long long ll_inst = shex2lldec(s_inst);
+    unsigned long long ll_inst = shex2lldec(s_inst);
     // printf("int : %lld\n", ll_inst);
     // printf("hex : 0x%llx\n", ll_inst);
     
-    bitset<32> bit(ll_inst);
+    bitset<64> bit(ll_inst);
     string sb_inst = bit.to_string();
-    printf("bin : %s\n", sb_inst.c_str());
+    // printf("bin : %s\n", sb_inst.c_str());
     
 
 
@@ -225,31 +190,124 @@ int main(int argc, char** argv){
     // printf("L2 index bit : %s\n", inst_L2_index_bit.c_str());
 
     int L1_index = sbin2idec(inst_L1_index_bit);
+    int L1_tag = sbin2idec(inst_L1_tag_bit);
+    
     int L2_index = sbin2idec(inst_L2_index_bit);
+    int L2_tag = sbin2idec(inst_L2_tag_bit);
 
     // printf("L1 index = %d\n", L1_index);
+    // printf("L1 tag = %d\n", L1_tag);
     // printf("L2 index = %d\n", L2_index);
+    // printf("L2 tag = %d\n", L2_tag);
+    
     
 
+
     /***********************************************
-    여기에 
+                    write, read 구현
     ************************************************/
 
+    int L1_hit = 0;
+    int L1_miss = 0;
+    int L2_hit = 0;
+    int L2_miss = 0;
 
     if(split_str[0] == "W"){
-        // 해당 값을 그냥 씀
-        // n-way set일 경우 만약 다 찼을 경우, 제일 마지막으로 사용된 값이 없어짐
+        // 먼저 각 way에 각 set에 각 block에 data가 있는지 확인
+        bool exist_check = false;
+        int a_way_to_be_used = 0;
+        for(int i=0; i<L1_way; i++){ // for each way
+            if(L1[i][L1_index][0] == 1) exist_check = true;
+            else{
+                exist_check = false;
+                a_way_to_be_used = i;
+                break;
+            }
+        }
+        printf("exist_check = %s\n", exist_check ? "true" : "false");
+        printf("a_way_to_be_used = %d\n", a_way_to_be_used);
         
-        // 일단 directed map
-        Element L1_data(valid_bit, inst_L1_tag_bit, num_of_words_in_a_block);
+        if(exist_check == true){ // no empty block
+            if(cache_replacement_policy == 1){ //lru
+
+            }
+            else{ // random
+
+            }
+        }
+        else{ // there is an empty block for any block
+            
+            // L1
+            printf("before : L1[%d][%d][%d] = %lld\n", a_way_to_be_used, L1_index, 0, L1[a_way_to_be_used][L1_index][0]);
+            printf("before : L1[%d][%d][%d] = %lld\n", a_way_to_be_used, L1_index, 1, L1[a_way_to_be_used][L1_index][1]);
+            int a = 0;
+            L1[L1_index][a][a_way_to_be_used] = 1;
+            printf("after : L1[%d][%d][%d] = %lld\n", a_way_to_be_used, L1_index, 0, L1[a_way_to_be_used][L1_index][0]);
+            printf("after : L1[%d][%d][%d] = %lld\n", a_way_to_be_used, L1_index, 1, L1[a_way_to_be_used][L1_index][1]);
+
+            // printf("before : L1[%d][%d][%d] = %lld\n", L1_index, 1, a_way_to_be_used, L1[L1_index][1][a_way_to_be_used]);
+            L1[L1_index][1][a_way_to_be_used] = L1_tag;
+            // printf("after : L1[%d][%d][%d] = %lld\n", L1_index, 1, a_way_to_be_used, L1[L1_index][1][a_way_to_be_used]);
+
+            for(int x=0; x<num_of_words_in_a_block; x++){
+                // L1[L1_index][2+x][a_way_to_be_used] = ll_inst + 4*x;
+                cout << "done" << endl;
+            }
+
+            //L2
+            // L2[L2_index][0][a_way_to_be_used] = 1;
+            // L2[L2_index][1][a_way_to_be_used] = L2_tag;
+            // for(int x=0; x<num_of_words_in_a_block; x++){
+            //     L2[L2_index][2+x][a_way_to_be_used] = ll_inst + 4*x;
+            // }
+        }
+
     }
+
     else if(split_str[0] == "R"){
-        // 일단 읽음
-        // 먼저 tag bit가 0이면 miss 후 L2 cache로도 안 감
-        // tag bit가 0이 아닐 때
-        // hit 이면 hit
-        // miss 면 L2 cache로
+        // if there is the data in any blocks
+
+        bool check = false;
+        for(int k=0; k<L1_way; k++){ // for each way    
+            if(L1[L1_index][0][k] == 1){ // valid bit == 1
+                if(L1[L1_index][1][k] == L1_tag){ // tag matching만 되면 무조건 맞는겨?
+                    check = true;
+                }
+                else continue;
+            }
+            else continue; // valid bit == 0
+        }
+
+        if(check == true) L1_hit++;
+        else{
+            L1_miss++;
+            // bool check = false;
+            for(int k=0; k<L2_way; k++){ // for each way    
+                if(L2[L2_index][0][k] == 1){ // valid bit == 1
+                    if(L2[L2_index][1][k] == L2_tag){ // tag matching만 되면 무조건 맞는겨?
+                        check = true;
+                    }
+                    else continue;
+                }
+                else continue; // valid bit == 0
+            }
+
+            if(check == true) L2_hit++;
+            else L2_miss++;
+        }
     }
+
+
+
+
+    /**********************************************
+                        example
+    **********************************************/ 
+
+    for(int j=0; j<size; j++){
+        printf("L1[%d][%d][%d] = %lld\n", L1_index, j, L1_way-1, L1[L1_index][j][L1_way-1]);
+    }
+   
 
 
 
