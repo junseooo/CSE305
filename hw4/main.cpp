@@ -672,7 +672,7 @@ int main(int argc, char** argv){
         }
         
 
-        ::printf("%d done.\n", inst);
+        // ::printf("%d done.\n", inst);
     }
 
     ::printf("-- General Stats --\n");
