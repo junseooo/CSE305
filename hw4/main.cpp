@@ -87,6 +87,11 @@ int main(int argc, char** argv){
         }
     }
 
+    string store_file_name = "" + trace_file_name + "_" + to_string(L2_capacity) + "_" + to_string(L2_associativity) + "_" + to_string(block_size) + ".out";
+    // cout << store_file_name << endl;
+
+    
+
     L1_capacity = L2_capacity/4;
     if(L2_associativity >= 4) L1_associativity = L2_associativity/4;
     else L1_associativity = L2_associativity;
@@ -696,6 +701,34 @@ int main(int argc, char** argv){
     ::printf("L2 clean eviction: %d\n", L2_clean_eviction);
     ::printf("L1 dirty eviction: %d\n", L1_dirty_eviction);
     ::printf("L2 dirty eviction: %d\n", L2_dirty_eviction);
+
+    ofstream fout;
+    fout.open(store_file_name);
+    if(fout.is_open()){
+        fout << "-- General Stats --" << endl;
+        fout << "L1 capacity: " << dec << L1_capacity << endl;
+        fout << "L1 way: " << L1_way << endl;
+        fout << "L2 capacity: " << L2_capacity << endl;
+        fout << "L2 way: " << L2_way << endl;
+        fout << "Block size: " << block_size << endl;
+        fout << "Total accesses: " << total_access << endl;
+        fout << "read accesses: " << read_access << endl;
+        fout << "write accesses: " << write_access << endl;
+        fout << "L1 Read misses: " << L1_read_miss << endl;
+        fout << "L2 Read misses: " << L2_read_miss << endl;
+        fout << "L1 Write misses: " << L1_write_miss << endl;
+        fout << "L2 Write misses: " << L2_write_miss << endl;
+        fout.precision(4);
+        fout << "L1 Read miss rate: " << (double)L1_read_miss/(double)read_access*100 << "%" << endl;
+        fout << "L2 Read miss rate: " << (double)L2_read_miss/(double)L1_read_miss*100 << "%" << endl;
+        fout << "L1 Write miss rate: " << (double)L1_write_miss/(double)write_access*100 << "%" << endl;
+        fout << "L2 Write miss rate: " << (double)L2_write_miss/(double)L1_write_miss*100 << "%" << endl;
+        fout << "L1 clean eviction: " << L1_clean_eviction << endl;
+        fout << "L2 clean eviction: " << L2_clean_eviction << endl;
+        fout << "L1 dirty eviction: " << L1_dirty_eviction << endl;
+        fout << "L2 dirty eviction: " << L2_dirty_eviction << endl;
+    }
+    fout.close();
     
     
     
