@@ -197,7 +197,9 @@ int main(int argc, char** argv){
     fin.close();
     
 
-    int cnt = 0;
+    int cnt1 = 0;
+    int cnt2 = 0;
+    int cnt3 = 0;
     
     int total_access = 0;
     int read_access = 0;
@@ -212,12 +214,9 @@ int main(int argc, char** argv){
     int L2_clean_eviction = 0;
     int L1_dirty_eviction = 0;
     int L2_dirty_eviction = 0;
-    
-    queue<vector<unsigned long long>> q1;
-    queue<vector<unsigned long long>> q2;
 
     // for(int inst=0; inst<code.size(); inst++){
-    for(int inst=0; inst<1000; inst++){
+    for(int inst=0; inst<3000; inst++){
         string str = code[inst];
         istringstream ss(str);
         vector<string> split_str;
@@ -283,29 +282,26 @@ int main(int argc, char** argv){
             // block size에 맞춰서 block을 만듦.
             // 이 때 block은 block_offset_bit를 int로 바꿔서 그 값이 block_index가 되도록 만들어야함!
 
-            vector<unsigned long long> L1_block;
-            L1_block.clear();
-            // for(int i=0; i<num_of_words_in_a_block; i++){
-            //     L1_block.push_back(ll_inst + 8*i);
-            // }
             string inst_block_index = sb_inst.substr(sb_inst.size() - byte_offset_bit - block_offset_bit, block_offset_bit);
-            // printf("%s = %s\n", "block index bit", inst_block_index.c_str());
             int block_index = sbin2idec(inst_block_index);
             int pre = block_index;
             int post = num_of_words_in_a_block - block_index;
 
+            vector<unsigned long long> L1_block;
+            L1_block.clear();
             for(int i=0; i<pre; i++){
                 L1_block.push_back(ll_inst - (pre - i) * word_size);
             }
             for(int i=0; i<post; i++){
                 L1_block.push_back(ll_inst + i * word_size);
             }
+            
+            // for(int i=0; i<L1_block.size(); i++){
+            //     ::printf("L1_block[%d] = 0x%llx\n", i, L1_block[i]);
+            // }
 
             vector<unsigned long long> L2_block;
             L2_block.clear();
-            // for(int i=0; i<num_of_words_in_a_block; i++){
-            //     L2_block.push_back(ll_inst + 8*i);
-            // }
             for(int i=0; i<pre; i++){
                 L2_block.push_back(ll_inst - (pre - i) * word_size);
             }
@@ -320,262 +316,263 @@ int main(int argc, char** argv){
             // 각 index에 해당하는 Data 구조체가 존재하는지 확인
             // (way 상관없지만 각 way 검사해서 어느 way에 있는지, 어느 way에서부터 없는지 기록하도록) valid로 있는지 없는지 확인
             // 만약 있다면 tag matching까지 해서 한 번에 확인
-
-            bool valid_check = false;
-            bool tag_check = false;
             
-            for(int i=0; i<L1_cache.size(); i++){
+            
+            // for L1 cache
+            // true : hit, false : miss
+            bool L1_state = false;
+
+            bool L1_valid_check = false;
+            bool L1_tag_check = false;
+
+            // L1의 hit과 miss를 결정지을 수 있는 경우는 총 세 가지이다
+            int L1_case = 0;
+            // case1 : L1 valid check == true && L1 tag check == true => L1 hit
+            // case2 : L1 valid check == true && L1 tag check == false => L1 miss
+            // case3 : L1 valid check == false => L1 miss
+            
+            for(int i=0; i<L1_cache.size(); i++){ // L1
                 if(L1_cache[i][L1_index].valid == true){
-                    valid_check = true;
+                    L1_valid_check = true;
                     break;
                 }
                 else{
-                    valid_check = false;
-                    break;
+                    L1_valid_check = false;
                 }
             }
 
-            if(valid_check){
+            if(L1_valid_check){
                 for(int i=0; i<L1_cache.size(); i++){
-                    if(L1_cache[i][L1_index].valid == true && L1_cache[i][L1_index].tag == L1_tag){
-                        tag_check = true;
+                    if(L1_cache[i][L1_index].tag == L1_tag){
+                        L1_tag_check = true;
+                        break;
+                    }
+                    else{
+                        L1_tag_check = false;
                     }
                 }
             }
+
+            if(L1_valid_check == true && L1_tag_check == true){
+                L1_case = 1;
+                L1_state = true;
+            }
+            else if(L1_valid_check == true && L1_tag_check == false){
+                L1_case = 2;
+                L1_state = false;
+            }
+            else if(L1_valid_check == false){
+                L1_case = 3;
+                L1_state = false;
+            }
+
+            // for L2 cache
             
-            
-            // valid 확인 후 true인 경우엔 또 두가지로 나뉨
-                // tag 확인 후 true인 경우 해당 Data안의 block에 해당 주소값이 있는지 확인을 해야함
-                // tag 확인 후 false인 경우 
-            // valid 확인 후 false인  경우, L2에도 없기 때문에 L1 write miss, L2 write miss이고, 두 cache에 모두 write
+            // true : hit, false : miss
+            bool L2_state = false;
 
-            bool endflag_1 = false;
-            bool endflag_2 = false;
+            bool L2_valid_check = false;
+            bool L2_tag_check = false;
 
-            bool L1_miss = true;
-            bool L2_miss = true;
 
-            if(valid_check){ // valid = 1일 경우
-                if(tag_check){
-
-                    // L1 돌면서 있는지 확인 후 L1_miss 정해주기
-                    for(int i=0; i<L1_cache.size(); i++){
-                        for(int j=0; j<L1_cache[i][L1_index].block.size(); j++){
-                            if(L1_cache[i][L1_index].block[j] == ll_inst){
-                                // L1 write hit!
-                                L1_miss = false;
-                                endflag_1 = true;
-                                break;
-                            }
-                        }
-                        if(endflag_1) break;
+            if(L1_state == false){ // L2
+                // L2의 hit과 miss를 결정지을 수 있는 경우는 총 세 가지이다
+                // case1 : L2 valid check == true && L2 tag check == true => L2 hit
+                // case2 : L2 valid check == true && L2 tag check == false => L2 miss
+                // case3 : L2 valid check == false => L2 miss
+                for(int i=0; i<L2_cache.size(); i++){
+                    if(L2_cache[i][L2_index].valid == true){
+                        L2_valid_check = true;
+                        break;
                     }
-
-                    // L1_miss가 true인 경우 L2 돌면서 있는지 확인 후 L2_miss 정해주기
-                    if(L1_miss){
-                        L1_write_miss++;
-                        for(int i=0; i<L2_cache.size(); i++){
-                            for(int j=0; j<L2_cache[i][L2_index].block.size(); j++){
-                                if(L2_cache[i][L2_index].block[j] == ll_inst){
-                                    // L2 write hit!
-                                    L2_miss = false;
-                                    endflag_1 = true;
-                                    break;
-                                }
-                            }
-                            if(endflag_1) break;
-                        }
-
-                        if(L2_miss) L2_write_miss++;
+                    else{
+                        L2_valid_check = false;
                     }
-                    
                 }
 
-                else{ // valid는 맞는데 tag matching이 실패한 경우
-                    L1_miss = true;
+                if(L2_valid_check){
                     for(int i=0; i<L2_cache.size(); i++){
-                        for(int j=0; j<L2_cache[i][L2_index].block.size(); j++){
-                            if(L2_cache[i][L2_index].block[j] == ll_inst){
-                                // L2 write hit!
-                                L2_miss = false;
-                                endflag_1 = true;
-                                break;
-                            }
+                        if(L2_cache[i][L2_index].tag == L2_tag){
+                            L2_tag_check = true;
+                            break;
                         }
-                        if(endflag_1) break;
+                        else{
+                            L2_tag_check = false;
+                        }
                     }
                 }
 
+                if(L2_valid_check == true && L2_tag_check == true){
+                    L2_state = true;
+                }
+                else if(L2_valid_check == true && L2_tag_check == false){
+                    L2_state = false;
+                }
+                else if(L2_valid_check == false){
+                    L2_state = false;
+                }
+            }
 
+            int statement = 0;
+            // 1 : L1 miss and L2 miss -> L1에 없어서 L2에 확인해봤는데 L2에도 없음
+            // 2 : L1 miss and L2 hit -> L1에 없어서 L2에 확인해봤는데 L2에는 있음
+            // 3 : L1 hit and L2 hit -> 우리가 원하는 상황
+            if(L1_state == false && L2_state == false){
+                statement = 1;
+            }
+            else if(L1_state == false && L2_state == true){
+                statement = 2;
+            }
+            else if(L1_state == true){
+                statement = 3;
+            }
 
+            
+            // 모든 상황 확인 후 L1_miss와 L2_miss 확인
 
+            if(statement == 1){ // L1과 L2 둘 다 miss인 경우
+                L1_write_miss++;
+                L2_write_miss++;
 
-                // 정해준 L1_miss와 L2_miss에 따라 경우 나눠서 쓰기
-                if(L1_miss == true && L2_miss == true){
-                    if(cache_replacement_policy == 1){ // lru
-                        // cout << "L2 write evict" << endl;
-                        
-                        int L2_evict_way = 0;
-                        vector<int> buffer2;
-                        
-                        for(int i=0; i<L2_cache.size(); i++){
-                            buffer2.push_back(L2_cache[i][L2_index].lru_index);
-                        }
-                        int max2 = *max_element(buffer2.begin(), buffer2.end());
-                        int min2 = *min_element(buffer2.begin(), buffer2.end());
-
-                        if(min2 != 0){
-                            for(int i=0; i<L2_cache.size(); i++){
-                                if(L2_cache[i][L2_index].lru_index == min2){
-                                    L2_evict_way = i + 1;
-                                }
-                            }
-                            for(int i=0; i<L2_cache.size(); i++){
-                                L2_cache[i][L2_index].lru_index--;
-                            }
-                            L2_cache[L2_evict_way-1][L2_index].valid = true;
-                            L2_cache[L2_evict_way-1][L2_index].tag = L2_tag;
-                            L2_cache[L2_evict_way-1][L2_index].block = L2_block;
-                            L2_cache[L2_evict_way-1][L2_index].lru_index = max2;
-                            L2_dirty_eviction++;
-                        }
-                        else{
-                            L2_evict_way = max2 + 1;
-                            L2_cache[L2_evict_way-1][L2_index].valid = true;
-                            L2_cache[L2_evict_way-1][L2_index].tag = L2_tag;
-                            L2_cache[L2_evict_way-1][L2_index].block = L2_block;
-                            L2_cache[L2_evict_way-1][L2_index].lru_index = L2_evict_way;
-                            L2_clean_eviction++;
-                        }
-
-
-                        // cout << "L1 write evict with L2 write evict" << endl;
-
-                        int L1_evict_way = 0;
-                        vector<int> buffer1;
-                        
-                        for(int i=0; i<L1_cache.size(); i++){
-                            buffer1.push_back(L1_cache[i][L1_index].lru_index);
-                        }
-                        int max1 = *max_element(buffer1.begin(), buffer1.end());
-                        int min1 = *min_element(buffer1.begin(), buffer1.end());
-
-                        if(min1 != 0){
-                            for(int i=0; i<L1_cache.size(); i++){
-                                if(L1_cache[i][L1_index].lru_index == min1){
-                                    L1_evict_way = i + 1;
-                                }
-                            }
-                            // cout << L1_cache.size() << endl;
-                            // cout << L1_evict_way << endl;
-
-                            for(int i=0; i<L1_cache.size(); i++){
-                                L1_cache[i][L1_index].lru_index--;
-                            }
-                            L1_cache[L1_evict_way-1][L1_index].valid = true;
-                            L1_cache[L1_evict_way-1][L1_index].tag = L1_tag;
-                            L1_cache[L1_evict_way-1][L1_index].block = L1_block;
-                            L1_cache[L1_evict_way-1][L1_index].lru_index = max1;
-                            L1_dirty_eviction++;
-                        }
-                        else{
-                            L1_evict_way = max1 + 1;
-                            L1_cache[L1_evict_way-1][L1_index].valid = true;
-                            L1_cache[L1_evict_way-1][L1_index].tag = L1_tag;
-                            L1_cache[L1_evict_way-1][L1_index].block = L1_block;
-                            L1_cache[L1_evict_way-1][L1_index].lru_index = L1_evict_way;
-                            L1_clean_eviction++;
-                        }
+                if(cache_replacement_policy == 1){ // lru
+                    int L1_evict_way = 0;
+                    vector<int> buffer;
+                    
+                    for(int i=0; i<L1_cache.size(); i++){
+                        buffer.push_back(L1_cache[i][L1_index].lru_index);
                     }
-                    else{ // random
-                        // cout << "L2 write evict" << endl;
-                        int L2_evict_way = getRandomNumber(1, L2_way);
+                    int max = *max_element(buffer.begin(), buffer.end());
+                    int min = *min_element(buffer.begin(), buffer.end());
 
-                        L2_cache[L2_evict_way-1][L2_index].valid = true;
-                        L2_cache[L2_evict_way-1][L2_index].tag = L2_tag;
-                        L2_cache[L2_evict_way-1][L2_index].block = L2_block;
-
-                        L2_clean_eviction++;
-
-                        // cout << "L1 write evict with L2 write evict" << endl;
-                        int L1_evict_way = getRandomNumber(1, L1_way);
-
+                    if(min != 0){
+                        for(int i=0; i<L1_cache.size(); i++){
+                            if(L1_cache[i][L1_index].lru_index == min){
+                                L1_evict_way = i + 1;
+                            }
+                        }
+                        for(int i=0; i<L1_cache.size(); i++){
+                            L1_cache[i][L1_index].lru_index--;
+                        }
                         L1_cache[L1_evict_way-1][L1_index].valid = true;
                         L1_cache[L1_evict_way-1][L1_index].tag = L1_tag;
                         L1_cache[L1_evict_way-1][L1_index].block = L1_block;
-                        
+                        L1_cache[L1_evict_way-1][L1_index].lru_index = max;
+                        L1_dirty_eviction++;
+                    }
+                    else{
+                        L1_evict_way = max + 1;
+                        L1_cache[L1_evict_way-1][L1_index].valid = true;
+                        L1_cache[L1_evict_way-1][L1_index].tag = L1_tag;
+                        L1_cache[L1_evict_way-1][L1_index].block = L1_block;
+                        L1_cache[L1_evict_way-1][L1_index].lru_index = L1_evict_way;
                         L1_clean_eviction++;
                     }
                 }
-                else if(L1_miss == true && L2_miss == false){ // L2에서 hit
-                    if(cache_replacement_policy == 1){ // lru
-                        int L1_evict_way = 0;
-                        vector<int> buffer1;
-                        
-                        for(int i=0; i<L1_cache.size(); i++){
-                            buffer1.push_back(L1_cache[i][L1_index].lru_index);
-                        }
-                        int max1 = *max_element(buffer1.begin(), buffer1.end());
-                        int min1 = *min_element(buffer1.begin(), buffer1.end());
+                else{ // random
+                    int L1_evict_way = getRandomNumber(1, L1_way);
 
-                        if(min1 != 0){
-                            for(int i=0; i<L1_cache.size(); i++){
-                                if(L1_cache[i][L1_index].lru_index == min1){
-                                    L1_evict_way = i + 1;
-                                }
-                            }
-                            for(int i=0; i<L1_cache.size(); i++){
-                                L1_cache[i][L1_index].lru_index--;
-                            }
-                            L1_cache[L1_evict_way-1][L1_index].valid = true;
-                            L1_cache[L1_evict_way-1][L1_index].tag = L1_tag;
-                            L1_cache[L1_evict_way-1][L1_index].block = L1_block;
-                            L1_cache[L1_evict_way-1][L1_index].lru_index = max1;
-                            L1_dirty_eviction++;
-                        }
-                        else{
-                            L1_evict_way = max1 + 1;
-                            L1_cache[L1_evict_way-1][L1_index].valid = true;
-                            L1_cache[L1_evict_way-1][L1_index].tag = L1_tag;
-                            L1_cache[L1_evict_way-1][L1_index].block = L1_block;
-                            L1_cache[L1_evict_way-1][L1_index].lru_index = L1_evict_way;
-                            L1_clean_eviction++;
-                        }
+                    L1_cache[L1_evict_way-1][L1_index].valid = true;
+                    L1_cache[L1_evict_way-1][L1_index].tag = L1_tag;
+                    L1_cache[L1_evict_way-1][L1_index].block = L1_block;
+                    
+                    L1_dirty_eviction++;
+                }
+
+
+
+                if(cache_replacement_policy == 1){ // lru
+                    int L2_evict_way = 0;
+                    vector<int> buffer;
+                    
+                    for(int i=0; i<L2_cache.size(); i++){
+                        buffer.push_back(L2_cache[i][L2_index].lru_index);
                     }
-                    else{ // random
-                        // cout << "L1 write evict" << endl;
-                        int L1_evict_way = getRandomNumber(1, L1_way);
+                    int max = *max_element(buffer.begin(), buffer.end());
+                    int min = *min_element(buffer.begin(), buffer.end());
 
+                    if(min != 0){
+                        for(int i=0; i<L2_cache.size(); i++){
+                            if(L2_cache[i][L2_index].lru_index == min){
+                                L2_evict_way = i + 1;
+                            }
+                        }
+                        for(int i=0; i<L2_cache.size(); i++){
+                            L2_cache[i][L2_index].lru_index--;
+                        }
+                        L2_cache[L2_evict_way-1][L2_index].valid = true;
+                        L2_cache[L2_evict_way-1][L2_index].tag = L2_tag;
+                        L2_cache[L2_evict_way-1][L2_index].block = L2_block;
+                        L2_cache[L2_evict_way-1][L2_index].lru_index = max;
+                        L2_dirty_eviction++;
+                    }
+                    else{
+                        L2_evict_way = max + 1;
+                        L2_cache[L2_evict_way-1][L2_index].valid = true;
+                        L2_cache[L2_evict_way-1][L2_index].tag = L2_tag;
+                        L2_cache[L2_evict_way-1][L2_index].block = L2_block;
+                        L2_cache[L2_evict_way-1][L2_index].lru_index = L2_evict_way;
+                        L2_clean_eviction++;
+                    }
+                }
+                else{ // random
+                    int L2_evict_way = getRandomNumber(1, L2_way);
+
+                    L2_cache[L2_evict_way-1][L2_index].valid = true;
+                    L2_cache[L2_evict_way-1][L2_index].tag = L2_tag;
+                    L2_cache[L2_evict_way-1][L2_index].block = L2_block;
+                    
+                    L2_dirty_eviction++;
+                }
+            }
+
+            else if(statement == 2){ // L1는 miss지만 L2에는 값이 있어서 hit
+                L1_write_miss++;
+                
+                if(cache_replacement_policy == 1){ // lru
+                    int L1_evict_way = 0;
+                    vector<int> buffer;
+                    
+                    for(int i=0; i<L1_cache.size(); i++){
+                        buffer.push_back(L1_cache[i][L1_index].lru_index);
+                    }
+                    int max = *max_element(buffer.begin(), buffer.end());
+                    int min = *min_element(buffer.begin(), buffer.end());
+
+                    if(min != 0){
+                        for(int i=0; i<L1_cache.size(); i++){
+                            if(L1_cache[i][L1_index].lru_index == min){
+                                L1_evict_way = i + 1;
+                            }
+                        }
+                        for(int i=0; i<L1_cache.size(); i++){
+                            L1_cache[i][L1_index].lru_index--;
+                        }
                         L1_cache[L1_evict_way-1][L1_index].valid = true;
                         L1_cache[L1_evict_way-1][L1_index].tag = L1_tag;
                         L1_cache[L1_evict_way-1][L1_index].block = L1_block;
-                        
+                        L1_cache[L1_evict_way-1][L1_index].lru_index = max;
                         L1_dirty_eviction++;
                     }
+                    else{
+                        L1_evict_way = max + 1;
+                        L1_cache[L1_evict_way-1][L1_index].valid = true;
+                        L1_cache[L1_evict_way-1][L1_index].tag = L1_tag;
+                        L1_cache[L1_evict_way-1][L1_index].block = L1_block;
+                        L1_cache[L1_evict_way-1][L1_index].lru_index = L1_evict_way;
+                        L1_clean_eviction++;
+                    }
+                }
+                else{ // random
+                    int L1_evict_way = getRandomNumber(1, L1_way);
+
+                    L1_cache[L1_evict_way-1][L1_index].valid = true;
+                    L1_cache[L1_evict_way-1][L1_index].tag = L1_tag;
+                    L1_cache[L1_evict_way-1][L1_index].block = L1_block;
+                    
+                    L1_dirty_eviction++;
                 }
             }
-
-            else{ // L1 cache의 L1 index의 valid가 0, 즉 빈 칸이므로(L2도 빈칸이므로) 0으로 차있는거 덮어 씌우면 됌
-                L1_write_miss++;
-                L1_cache[0][L1_index].valid = true;
-                L1_cache[0][L1_index].tag = L1_tag;
-                L1_cache[0][L1_index].block = L1_block;
-                if(cache_replacement_policy == 1){
-                    L1_cache[0][L1_index].lru_index = 1;
-                    // q1.push(L1_cache[0][L1_index].block);
-                }
-                L1_clean_eviction++; // dirty == false
-
-                L2_write_miss++;
-                L2_cache[0][L2_index].valid = true;
-                L2_cache[0][L2_index].tag = L2_tag;
-                L2_cache[0][L2_index].block = L2_block;
-                if(cache_replacement_policy == 1){
-                    L2_cache[0][L2_index].lru_index = 1;
-                    // q2.push(L2_cache[0][L2_index].block);
-                }
-                L2_clean_eviction++; // dirty == false
-            }
+            
         }
 
 
@@ -586,97 +583,127 @@ int main(int argc, char** argv){
             read_access++;
             total_access++;
 
-            bool valid_check = false;
-            bool tag_check = false;
+                        
+            // for L1 cache
+            // true : hit, false : miss
+            bool L1_state = false;
+
+            bool L1_valid_check = false;
+            bool L1_tag_check = false;
+
+            // L1의 hit과 miss를 결정지을 수 있는 경우는 총 세 가지이다
+            int L1_case = 0;
+            // case1 : L1 valid check == true && L1 tag check == true => L1 hit
+            // case2 : L1 valid check == true && L1 tag check == false => L1 miss
+            // case3 : L1 valid check == false => L1 miss
             
-            for(int i=0; i<L1_cache.size(); i++){
+            for(int i=0; i<L1_cache.size(); i++){ // L1
                 if(L1_cache[i][L1_index].valid == true){
-                    valid_check = true;
+                    L1_valid_check = true;
                     break;
                 }
                 else{
-                    valid_check = false;
-                    break;
+                    L1_valid_check = false;
                 }
             }
 
-            if(valid_check){
+            if(L1_valid_check){
                 for(int i=0; i<L1_cache.size(); i++){
-                    if(L1_cache[i][L1_index].valid == true && L1_cache[i][L1_index].tag == L1_tag){
-                        tag_check = true;
+                    if(L1_cache[i][L1_index].tag == L1_tag){
+                        L1_tag_check = true;
+                        break;
+                    }
+                    else{
+                        L1_tag_check = false;
                     }
                 }
             }
+
+            if(L1_valid_check == true && L1_tag_check == true){
+                L1_case = 1;
+                L1_state = true;
+                // cnt1++;
+            }
+            else if(L1_valid_check == true && L1_tag_check == false){
+                L1_case = 2;
+                L1_state = false;
+                // cnt2++;
+            }
+            else if(L1_valid_check == false){
+                L1_case = 3;
+                L1_state = false;
+                // cnt3++;
+            }
+
+            // for L2 cache
             
-            
-            // valid 확인 후 true인 경우엔 또 두가지로 나뉨
-                // tag 확인 후 true인 경우 해당 Data안의 block에 해당 주소값이 있는지 확인을 해야함
-                // tag 확인 후 false인 경우 
-            // valid 확인 후 false인  경우, L2에도 없기 때문에 L1 read miss, L2 read miss
+            // true : hit, false : miss
+            bool L2_state = false;
 
-            bool endflag_1 = false;
-            bool endflag_2 = false;
+            bool L2_valid_check = false;
+            bool L2_tag_check = false;
 
-            bool L1_miss = true;
-            bool L2_miss = true;
 
-            if(valid_check){ // valid = 1일 경우
-                if(tag_check){
-
-                    // L1 돌면서 있는지 확인 후 L1_miss 정해주기
-                    for(int i=0; i<L1_cache.size(); i++){
-                        for(int j=0; j<L1_cache[i][L1_index].block.size(); j++){
-                            if(L1_cache[i][L1_index].block[j] == ll_inst){
-                                // L1 read hit!
-                                L1_miss = false;
-                                endflag_1 = true;
-                                break;
-                            }
-                        }
-                        if(endflag_1) break;
+            if(L1_state == false){ // L2
+                // L2의 hit과 miss를 결정지을 수 있는 경우는 총 세 가지이다
+                // case1 : L2 valid check == true && L2 tag check == true => L2 hit
+                // case2 : L2 valid check == true && L2 tag check == false => L2 miss
+                // case3 : L2 valid check == false => L2 miss
+                for(int i=0; i<L2_cache.size(); i++){
+                    if(L2_cache[i][L2_index].valid == true){
+                        L2_valid_check = true;
+                        break;
                     }
-
-                    // L1_miss가 true인 경우 L2 돌면서 있는지 확인 후 L2_miss 정해주기
-                    if(L1_miss){
-                        L1_read_miss++;
-                        for(int i=0; i<L2_cache.size(); i++){
-                            for(int j=0; j<L2_cache[i][L2_index].block.size(); j++){
-                                if(L2_cache[i][L2_index].block[j] == ll_inst){
-                                    // L2 read hit!
-                                    L2_miss = false;
-                                    endflag_1 = true;
-                                    break;
-                                }
-                            }
-                            if(endflag_1) break;
-                        }
-                        if(L2_miss) L2_read_miss++;
+                    else{
+                        L2_valid_check = false;
                     }
                 }
 
-                else{ // valid는 맞는데 tag matching이 실패한 경우
-                    L1_miss = true;
+                if(L2_valid_check){
                     for(int i=0; i<L2_cache.size(); i++){
-                        for(int j=0; j<L2_cache[i][L2_index].block.size(); j++){
-                            if(L2_cache[i][L2_index].block[j] == ll_inst){
-                                // L2 read hit!
-                                L2_miss = false;
-                                endflag_1 = true;
-                                break;
-                            }
+                        if(L2_cache[i][L2_index].tag == L2_tag){
+                            L2_tag_check = true;
+                            break;
                         }
-                        if(endflag_1) break;
+                        else{
+                            L2_tag_check = false;
+                        }
                     }
                 }
 
+                if(L2_valid_check == true && L2_tag_check == true){
+                    L2_state = true;
+                }
+                else if(L2_valid_check == true && L2_tag_check == false){
+                    L2_state = false;
+                }
+                else if(L2_valid_check == false){
+                    L2_state = false;
+                }
             }
-            else{ // valid = 0 이라 L1에 없는 경우 -> L2에도 없기 때문에 둘다 miss
+
+            int statement = 0;
+            // 1 : L1 miss and L2 miss -> L1에 없어서 L2에 확인해봤는데 L2에도 없음
+            // 2 : L1 miss and L2 hit -> L1에 없어서 L2에 확인해봤는데 L2에는 있음
+            // 3 : L1 hit and L2 hit -> 우리가 원하는 상황
+            if(L1_state == false && L2_state == false){
+                statement = 1;
+                // cnt1++;
                 L1_read_miss++;
                 L2_read_miss++;
             }
+            else if(L1_state == false && L2_state == true){
+                statement = 2;
+                // cnt2++;
+                L1_read_miss++;
+            }
+            else if(L1_state == true){
+                statement = 3;
+                // cnt3++;
+            }
+
         }
         
-
         // ::printf("%d done.\n", inst);
     }
 
@@ -701,6 +728,7 @@ int main(int argc, char** argv){
     ::printf("L2 clean eviction: %d\n", L2_clean_eviction);
     ::printf("L1 dirty eviction: %d\n", L1_dirty_eviction);
     ::printf("L2 dirty eviction: %d\n", L2_dirty_eviction);
+    // ::printf("%d\n%d\n%d\n", cnt1, cnt2, cnt3);
 
     ofstream fout;
     fout.open(store_file_name);
