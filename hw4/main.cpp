@@ -471,11 +471,16 @@ int main(int argc, char** argv){
                 else{ // random
                     int L1_evict_way = getRandomNumber(1, L1_way);
 
+                    if(L1_cache[L1_evict_way-1][L1_index].dirty == false){
+                        L1_clean_eviction++;
+                    }
+                    else{
+                        L1_dirty_eviction++;
+                    }
                     L1_cache[L1_evict_way-1][L1_index].valid = true;
                     L1_cache[L1_evict_way-1][L1_index].tag = L1_tag;
                     L1_cache[L1_evict_way-1][L1_index].block = L1_block;
-                    
-                    L1_dirty_eviction++;
+                    L1_cache[L1_evict_way-1][L1_index].dirty = true;
                 }
 
 
@@ -514,14 +519,20 @@ int main(int argc, char** argv){
                         L2_clean_eviction++;
                     }
                 }
+
                 else{ // random
                     int L2_evict_way = getRandomNumber(1, L2_way);
 
+                    if(L2_cache[L2_evict_way-1][L2_index].dirty == false){
+                        L2_clean_eviction++;
+                    }
+                    else{
+                        L2_dirty_eviction++;
+                    }
                     L2_cache[L2_evict_way-1][L2_index].valid = true;
                     L2_cache[L2_evict_way-1][L2_index].tag = L2_tag;
                     L2_cache[L2_evict_way-1][L2_index].block = L2_block;
-                    
-                    L2_dirty_eviction++;
+                    L2_cache[L2_evict_way-1][L2_index].dirty = true;
                 }
             }
 
@@ -565,14 +576,18 @@ int main(int argc, char** argv){
                 else{ // random
                     int L1_evict_way = getRandomNumber(1, L1_way);
 
+                    if(L1_cache[L1_evict_way-1][L1_index].dirty == false){
+                        L1_clean_eviction++;
+                    }
+                    else{
+                        L1_dirty_eviction++;
+                    }
                     L1_cache[L1_evict_way-1][L1_index].valid = true;
                     L1_cache[L1_evict_way-1][L1_index].tag = L1_tag;
                     L1_cache[L1_evict_way-1][L1_index].block = L1_block;
-                    
-                    L1_dirty_eviction++;
+                    L1_cache[L1_evict_way-1][L1_index].dirty = true;
                 }
             }
-            
         }
 
 
