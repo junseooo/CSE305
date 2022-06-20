@@ -215,8 +215,8 @@ int main(int argc, char** argv){
     int L1_dirty_eviction = 0;
     int L2_dirty_eviction = 0;
 
-    // for(int inst=0; inst<code.size(); inst++){
-    for(int inst=0; inst<3000; inst++){
+    for(int inst=0; inst<code.size(); inst++){
+    // for(int inst=0; inst<3000; inst++){
         string str = code[inst];
         istringstream ss(str);
         vector<string> split_str;
